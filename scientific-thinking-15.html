@@ -257,7 +257,7 @@ mark[data-tip]:hover::after{content:attr(data-tip);position:absolute;left:0;bott
 <section class="view" id="view-lab">
   <div class="lab-intro">
     <h2>互动实验室</h2>
-    <p style="color:var(--ink2);font-size:14.5px">只读不练，等于没学。这里把最容易混淆、最依赖直觉的七个知识点做成了可操作的演示与测验，动手玩一遍，胜过读十遍。</p>
+    <p style="color:var(--ink2);font-size:14.5px">只读不练，等于没学。这里把十五个知识点全部做成了可操作的演示与测验，动手玩一遍，胜过读十遍。</p>
   </div>
   <div class="lab-grid">
     <!-- W1 事实观点拖拽 -->
@@ -327,6 +327,69 @@ mark[data-tip]:hover::after{content:attr(data-tip);position:absolute;left:0;bott
       <div class="w-head"><span class="w-num">15</span><h3>命题判官：它具备可证伪性吗？</h3></div>
       <p class="w-desc">波普尔：科学命题必须在逻辑上有可能被某个观察或实验推翻。无法被证伪却自称科学的，是伪科学。</p>
       <div id="falsifyBox"></div>
+    </div>
+
+    <!-- W8 科学/技术拖拽 -->
+    <div class="lab-widget">
+      <div class="w-head"><span class="w-num">02</span><h3>科学发现还是技术发明？</h3></div>
+      <p class="w-desc">发现自然规律是科学，创造实用工具是技术。把成就拖进正确的筐。</p>
+      <div class="drag-pool" id="stPool"></div>
+      <div class="drop-row">
+        <div class="drop-zone fact" id="stScience"><span class="dz-label">科学发现（规律）</span></div>
+        <div class="drop-zone opinion" id="stTech"><span class="dz-label">技术发明（工具）</span></div>
+      </div>
+      <div class="quiz-feedback" id="stFb"></div>
+      <div class="quiz-nav"><button class="btn" onclick="resetST()">重置</button><span class="quiz-progress" id="stProg"></span></div>
+    </div>
+
+    <!-- W9 信源溯源 -->
+    <div class="lab-widget">
+      <div class="w-head"><span class="w-num">03</span><h3>信源溯源：找到一手信源</h3></div>
+      <p class="w-desc">一条辟谣消息，层层点击追溯，找到它第一次被发表的地方。</p>
+      <div id="traceBox"></div>
+    </div>
+
+    <!-- W10 先后/因果测验 -->
+    <div class="lab-widget">
+      <div class="w-head"><span class="w-num">06</span><h3>先后关系还是因果关系？</h3></div>
+      <p class="w-desc">两事件一先一后，就能断定前者导致后者吗？</p>
+      <div id="seqQuiz"></div>
+    </div>
+
+    <!-- W11 类比/推演测验 -->
+    <div class="lab-widget">
+      <div class="w-head"><span class="w-num">09</span><h3>这是类比还是逻辑推演？</h3></div>
+      <p class="w-desc">类比帮助理解但不是论证；逻辑推演才是可靠的证明。</p>
+      <div id="analogyQuiz"></div>
+    </div>
+
+    <!-- W12 举证责任测验 -->
+    <div class="lab-widget">
+      <div class="w-head"><span class="w-num">10</span><h3>谁该拿出证据？</h3></div>
+      <p class="w-desc">提出存在性或因果主张的一方负有举证责任。</p>
+      <div id="burdenQuiz"></div>
+    </div>
+
+    <!-- W13 同行评审流程 -->
+    <div class="lab-widget">
+      <div class="w-head"><span class="w-num">11</span><h3>同行评审：一篇论文如何进入科学大厦</h3></div>
+      <p class="w-desc">科学共同体的质量闸门。点击每个环节看它在过滤什么。</p>
+      <div class="flow-steps" id="peerSteps" style="grid-template-columns:repeat(4,1fr)"></div>
+      <div class="flow-detail" id="peerDetail"><b>提示：</b>点击上方任意环节。</div>
+    </div>
+
+    <!-- W14 科学思考步骤 -->
+    <div class="lab-widget">
+      <div class="w-head"><span class="w-num">12</span><h3>科学思考四步走</h3></div>
+      <p class="w-desc">面对一个命题，科学思考的正确顺序是什么？选出下一步该做什么。</p>
+      <div id="sciThinkBox"></div>
+    </div>
+
+    <!-- W15 经验/规律测验 -->
+    <div class="lab-widget full">
+      <div class="w-head"><span class="w-num">13</span><h3>这是经验还是规律？</h3></div>
+      <p class="w-desc">规律客观必然、可重复验证；经验是主观总结，可能有偏差。</p>
+      <div id="expQuiz"></div>
     </div>
   </div>
 </section>
@@ -775,12 +838,161 @@ function renderFalsify(){
   document.getElementById('fsNext').onclick=()=>{fsIdx++;renderFalsify()};
 }
 
+/* ================= 通用测验引擎 ================= */
+function makeQuiz(boxId,questions){
+  const box=document.getElementById(boxId);
+  let idx=0,score=0,answered=false;
+  function render(){
+    if(idx>=questions.length){box.innerHTML=`<div class="quiz-q">完成！得分 ${score} / ${questions.length}</div><button class="btn btn-primary" onclick="this.parentElement.parentElement.querySelector('.quiz-q')">再来</button>`;
+      const btn=box.querySelector('button');btn.onclick=()=>{idx=0;score=0;render()};return}
+    const q=questions[idx];answered=false;
+    box.innerHTML=`<div class="quiz-q">${q.q}</div><div class="quz-opts">${q.opts.map((o,i)=>`<button class="quiz-opt" data-i="${i}">${o}</button>`).join('')}</div>
+      <div class="quiz-feedback"></div><div class="quiz-nav"><button class="btn" style="display:none">下一题</button><span class="quiz-progress">${idx+1} / ${questions.length}</span></div>`;
+    box.querySelectorAll('.quiz-opt').forEach(b=>b.onclick=()=>{
+      if(answered)return;answered=true;
+      const i=+b.dataset.i,ok=i===q.a;if(ok)score++;
+      box.querySelectorAll('.quiz-opt').forEach((x,j)=>{if(j===q.a)x.classList.add('right');if(j===i&&!ok)x.classList.add('bad')});
+      const fb=box.querySelector('.quiz-feedback');fb.textContent=(ok?'正确 ✓：':'错误：')+q.why;fb.style.color=ok?'var(--m2)':'#a33d24';
+      box.querySelector('.quiz-nav button').style.display='inline-block';
+    });
+    box.querySelector('.quiz-nav button').onclick=()=>{idx++;render()};
+  }
+  render();
+}
+
+/* ================= W8：科学/技术拖拽 ================= */
+const ST_ITEMS=[
+ {t:'牛顿运动三定律',f:1},{t:'万有引力定律',f:1},{t:'相对论',f:1},{t:'进化论',f:1},{t:'元素周期表',f:1},
+ {t:'造纸术 / 印刷术',f:0},{t:'爱迪生发明白炽灯',f:0},{t:'特斯拉改进交流输电',f:0},{t:'指南针',f:0}
+];
+let stSelected=null;
+function renderST(){
+  document.getElementById('stPool').innerHTML=ST_ITEMS.filter(i=>!i.placed).map((i)=>{
+    const ri=ST_ITEMS.indexOf(i);
+    return `<div class="drag-item" draggable="true" data-i="${ri}">${i.t}</div>`;
+  }).join('');
+  document.querySelectorAll('#stPool .drag-item').forEach(el=>{
+    el.addEventListener('dragstart',e=>{e.dataTransfer.setData('i',el.dataset.i);el.classList.add('dragging')});
+    el.addEventListener('dragend',()=>el.classList.remove('dragging'));
+    el.onclick=()=>{stSelected=+el.dataset.i;document.querySelectorAll('#stPool .drag-item').forEach(x=>x.style.outline=x===el?'2px solid #1f2a37':'none')};
+  });
+  ['stScience','stTech'].forEach(id=>{
+    const z=document.getElementById(id);
+    z.ondragover=e=>{e.preventDefault();z.classList.add('over')};
+    z.ondragleave=()=>z.classList.remove('over');
+    z.ondrop=e=>{e.preventDefault();z.classList.remove('over');stPlace(+e.dataTransfer.getData('i'),id==='stScience'?1:0)};
+    z.onclick=()=>{if(stSelected!==null){stPlace(stSelected,id==='stScience'?1:0);stSelected=null}};
+  });
+}
+function stPlace(i,zone){
+  const item=ST_ITEMS[i];if(item.placed)return;
+  const ok=item.f===zone;item.placed=true;item.result=ok;
+  const z=document.getElementById(zone?'stScience':'stTech');
+  const el=document.createElement('div');el.className='drag-item '+(ok?'correct':'wrong');el.textContent=item.t+(ok?' ✓':' ✗');
+  z.appendChild(el);
+  document.getElementById('stFb').textContent=ok?'正确：'+item.t+' 属于'+(zone?'科学发现':'技术发明')+'。':'判断错误：“'+item.t+'”实际是'+(item.f?'科学发现（揭示规律）':'技术发明（创造工具）')+'。';
+  document.getElementById('stFb').style.color=ok?'var(--m2)':'#a33d24';
+  renderST();
+  const done=ST_ITEMS.filter(x=>x.placed).length;
+  document.getElementById('stProg').textContent=done+' / '+ST_ITEMS.length;
+  if(done===ST_ITEMS.length){const s=ST_ITEMS.filter(x=>x.result).length;document.getElementById('stFb').textContent=`完成！答对 ${s}/${ST_ITEMS.length}。判据：科学=发现规律，技术=创造工具。`}
+}
+function resetST(){ST_ITEMS.forEach(i=>{i.placed=false;i.result=false});document.getElementById('stScience').innerHTML='<span class="dz-label">科学发现（规律）</span>';document.getElementById('stTech').innerHTML='<span class="dz-label">技术发明（工具）</span>';document.getElementById('stFb').textContent='';document.getElementById('stProg').textContent='';renderST()}
+
+/* ================= W9：信源溯源 ================= */
+const TRACE_CHAIN=[
+ {lvl:'你看到的',src:'朋友圈转发：“尼比鲁星球 2017 年撞击地球是谣言”',note:'这只是你接触到信息的地方，不是信源。'},
+ {lvl:'上一层',src:'某自媒体文章，引用“央视辟谣”',note:'二手转述，可能断章取义。'},
+ {lvl:'再上一层',src:'央视新闻 2017-09-20 报道，引用美国专家辟谣视频',note:'央视是转述者，仍非一手信源。'},
+ {lvl:'一手信源 ✓',src:'YouTube 2011-10-21：美国专家辟谣视频首次发表',note:'找到了！信息第一次被创造出来的地方，才是真正的信源。'}
+];
+function renderTrace(){
+  const box=document.getElementById('traceBox');
+  box.innerHTML=`<div class="quiz-q">消息：“尼比鲁星球将于 2017 年 9 月 23 日撞击地球”系谣言。<br>它的真正信源在哪里？点击下方按钮逐层追溯。</div>
+    <div id="traceChain"></div>
+    <div class="quiz-nav"><button class="btn" id="traceNext">追溯上一层 →</button></div>`;
+  let step=0;
+  document.getElementById('traceNext').onclick=function(){
+    if(step>=TRACE_CHAIN.length)return;
+    const c=TRACE_CHAIN[step];
+    const div=document.createElement('div');
+    div.style.cssText='background:var(--paper);border:1px solid var(--line);border-radius:9px;padding:11px 14px;margin-bottom:9px;font-size:13.5px;animation:fade .3s';
+    div.innerHTML=`<b style="color:${step===TRACE_CHAIN.length-1?'var(--m2)':'var(--m1)'}">${c.lvl}</b>：${c.src}<br><span style="color:var(--ink3);font-size:12.5px">${c.note}</span>`;
+    document.getElementById('traceChain').appendChild(div);
+    step++;
+    if(step>=TRACE_CHAIN.length){this.textContent='已找到一手信源 ✓';this.disabled=true;this.style.opacity='.6'}
+  };
+}
+
+/* ================= W10：先后/因果测验 ================= */
+const SEQ_Q=[
+ {q:'每天鸡叫之后，天就会亮。鸡叫是天亮的原因吗？',opts:['是因果关系','只是先后关系'],a:1,why:'鸡叫和天亮只是时间上先后，天亮由地球自转决定。'},
+ {q:'某人烧香后一个月怀孕了，烧香导致怀孕吗？',opts:['是因果关系','只是先后关系'],a:1,why:'没有证据证明烧香导致怀孕，仅时间先后不能推出因果。'},
+ {q:'接种乙肝疫苗后，体内产生抗体，不再感染乙肝。',opts:['是因果关系','只是先后关系'],a:0,why:'经过严格实验验证，疫苗确实诱导免疫，是因果关系。'},
+ {q:'广告公司宣称客户签约后利润增长 100%。',opts:['证明了因果','只证明先后'],a:1,why:'只能证明先后关系，无法排除市场、季节等其他因素。'},
+ {q:'富人往往身材健硕，所以瘦身能致富？',opts:['是因果关系','顺序搞反了'],a:1,why:'多数人是先富起来才有条件健身，不能倒因为果。'}
+];
+
+/* ================= W11：类比/推演测验 ================= */
+const ANA_Q=[
+ {q:'“人类不能和外星人沟通，就像人和蚂蚁无法沟通一样。”',opts:['类比论证','逻辑推演'],a:0,why:'这是类比，没有论证为什么可以把人比作蚂蚁。'},
+ {q:'“数学是宇宙普适规律，智慧文明都掌握数学，所以外星人可通过数学与人类沟通。”',opts:['类比论证','逻辑推演'],a:1,why:'从两条公理出发推导结论，是逻辑推演。'},
+ {q:'“虫子都不吃转基因食品，人吃了能没事吗？”',opts:['类比论证','逻辑推演'],a:0,why:'把人类比为虫子，前提不成立，是类比。'},
+ {q:'“把国家类比成公司，所以治理国家等于经营公司。”',opts:['类比论证','逻辑推演'],a:0,why:'国家与公司本质不同，类比不能作为论证。'}
+];
+
+/* ================= W12：举证责任测验 ================= */
+const BUR_Q=[
+ {q:'甲说：“金字塔是外星人建的。”谁该举证？',opts:['甲（主张方）','乙（反对方）'],a:0,why:'提出存在性主张的一方负有举证责任。'},
+ {q:'甲说：“吹冷风能引起感冒。”谁该举证？',opts:['甲（主张因果）','乙（否认因果）'],a:0,why:'主张因果关系存在的一方负有举证责任。'},
+ {q:'甲说：“这座桥是我设计的。”乙说不是。谁举证？',opts:['甲拿出设计证据','乙证明不是甲'],a:0,why:'主张“是我设计的”存在性主张，由甲举证。'},
+ {q:'警察指控某人偷窃。谁举证？',opts:['警方','嫌疑人自证清白'],a:0,why:'指控方负有举证责任，任何人无须自证清白。'}
+];
+
+/* ================= W13：同行评审流程 ================= */
+const PEER_STEPS=[
+ {t:'投稿',d:'<b>投稿：</b>研究者把论文投给期刊。这只是起点，论文还远未成为“科学大厦的一块砖”。'},
+ {t:'同行评审',d:'<b>同行评审：</b>期刊邀请同领域匿名专家审查方法、数据、结论是否可靠。这是质量闸门，名气再大也不能跳过。'},
+ {t:'修改与复审',d:'<b>修改与复审：</b>评审者提出问题，作者修改后可能再次送审，直到评审者满意或被拒稿。'},
+ {t:'发表 / 拒稿',d:'<b>发表或拒稿：</b>通过后才能发表，成为可被后人引用的成果；不通过则被拒。无论名气多大，未经同行评审的观点都不算科学结论。'}
+];
+function renderPeer(){
+  document.getElementById('peerSteps').innerHTML=PEER_STEPS.map((s,i)=>`<div class="flow-step" data-i="${i}"><div class="fs-n">${i+1}</div><div class="fs-t">${s.t}</div></div>`).join('');
+  document.querySelectorAll('#peerSteps .flow-step').forEach(el=>el.onclick=()=>{
+    document.querySelectorAll('#peerSteps .flow-step').forEach(x=>x.classList.remove('active'));
+    el.classList.add('active');
+    document.getElementById('peerDetail').innerHTML=PEER_STEPS[+el.dataset.i].d;
+  });
+}
+
+/* ================= W14：科学思考步骤 ================= */
+const SCI_THINK=[
+ {q:'命题：“黑丝袜能增加女人的性感程度。”科学思考的第一步应该做什么？',opts:['凭直觉给出答案','到论文库检索前人研究','直接做实验','用哲学思辨分析'],a:1,why:'第一步是调研前人研究，避免重复造轮子。'},
+ {q:'没找到前人研究，接下来该做什么？',opts:['宣布命题成立','给每个概念下操作定义，再设计实验','放弃研究','引用古人观点'],a:1,why:'先定义“性感”等概念的测量方式，才能设计可重复的实验。'},
+ {q:'实验发现命题为真，接下来该做什么？',opts:['直接下结论','用思辨提出原因假说，再分别设计实验验证','发表论文','换个命题'],a:1,why:'证实现象后，还要探究原因，循环“提假说—验证”。'},
+ {q:'如果某个原因假说被实验否定了，怎么办？',opts:['强行解释','提出新假说，继续验证','宣布整个命题错误','忽略实验结果'],a:1,why:'科学思考是循环过程：假说不成立就提新的，直到验证所有合理假说。'}
+];
+
+/* ================= W15：经验/规律测验 ================= */
+const EXP_Q=[
+ {q:'“感冒通常一周左右会自愈。”',opts:['客观规律','个人经验'],a:0,why:'经过大量临床验证，是自限性疾病的客观规律。'},
+ {q:'“我每次感冒捂一身汗就好得快。”',opts:['客观规律','个人经验'],a:1,why:'个人主观感受，临床试验发现不具普适性，是经验。'},
+ {q:'“水在标准大气压下 100℃ 沸腾。”',opts:['客观规律','个人经验'],a:0,why:'可重复验证的物理规律。'},
+ {q:'“喝姜茶能让感冒好得快。”',opts:['客观规律','个人经验'],a:1,why:'缺乏严格临床试验支持，属于经验性说法。'},
+ {q:'“日食是帝王不仁所致，勤政即可免祸。”',opts:['客观规律','经验/迷信'],a:1,why:'古人基于经验的错误归因，不是客观规律；日食由天体运行决定。'},
+ {q:'“物体不受外力时保持匀速直线运动或静止。”',opts:['客观规律','个人经验'],a:0,why:'牛顿第一定律，可重复验证的客观规律。'}
+];
+
 /* ================= 实验室初始化 ================= */
 let labInited=false;
 function initLabCharts(){
   if(!labInited){
     resetFV();initPyramid();genMem();drawCorr('icecream');
-    renderFallacy();renderRCT();renderFalsify();labInited=true;
+    renderFallacy();renderRCT();renderFalsify();
+    resetST();renderTrace();
+    makeQuiz('seqQuiz',SEQ_Q);makeQuiz('analogyQuiz',ANA_Q);makeQuiz('burdenQuiz',BUR_Q);
+    renderPeer();makeQuiz('sciThinkBox',SCI_THINK);makeQuiz('expQuiz',EXP_Q);
+    labInited=true;
   }
   setTimeout(()=>{Object.values(charts).forEach(c=>c.resize())},80);
 }
