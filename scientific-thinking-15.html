@@ -1,0 +1,862 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>科学思维十五讲 · 交互式学习手册</title>
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='7' fill='%231f2a37'/%3E%3Cpath d='M9 21V11h3l4 6 4-6h3v10h-3v-6l-4 6-4-6v6z' fill='%23f7f4ec'/%3E%3C/svg%3E">
+<link rel="stylesheet" href="https://miaoda.feishu.cn/fonts/css2?family=Noto+Serif+SC:wght@500;700;900&family=Noto+Sans+SC:wght@300;400;500;700&display=swap">
+<script src="https://cdn.jsdelivr.net/npm/echarts@5.5.1/dist/echarts.min.js"></script>
+<style>
+/* ============ 设计变量 ============ */
+:root{
+  --paper:#f5f1e8; --paper2:#efe9db; --card:#fbf9f3; --ink:#23282d; --ink2:#4a525b; --ink3:#8a8f96;
+  --line:#ddd5c3; --line2:#c9bfa8;
+  --m1:#2f6498; --m1bg:#e6eef6; --m2:#2f7d52; --m2bg:#e5f1ea; --m3:#bd622b; --m3bg:#f7ebe0; --m4:#6a4899; --m4bg:#eee8f6;
+  --hl:#fde9a8; --hl-warn:#f8c9c0; --hl-method:#c6e7cf;
+  --serif:'Noto Serif SC',Georgia,'Songti SC',serif;
+  --sans:'Noto Sans SC','PingFang SC','Microsoft YaHei',sans-serif;
+}
+*{margin:0;padding:0;box-sizing:border-box}
+html{scroll-behavior:smooth}
+body{font-family:var(--sans);background:var(--paper);color:var(--ink);line-height:1.75;font-size:16px;-webkit-font-smoothing:antialiased}
+body::before{content:"";position:fixed;inset:0;pointer-events:none;z-index:0;opacity:.5;
+  background-image:radial-gradient(circle at 1px 1px,rgba(60,50,30,.05) 1px,transparent 0);background-size:22px 22px}
+::selection{background:#e8d49a}
+
+/* ============ 顶部导航 ============ */
+.topbar{position:sticky;top:0;z-index:100;background:rgba(245,241,232,.92);backdrop-filter:blur(10px);
+  border-bottom:1px solid var(--line);display:flex;align-items:center;gap:18px;padding:0 22px;height:60px}
+.logo{font-family:var(--serif);font-weight:900;font-size:18px;letter-spacing:.5px;white-space:nowrap;cursor:pointer;display:flex;align-items:center;gap:9px}
+.logo .mark{width:28px;height:28px;background:#1f2a37;border-radius:7px;display:grid;place-items:center;color:var(--paper);font-size:15px;font-family:var(--sans);font-weight:700}
+.nav-tabs{display:flex;gap:4px;margin-left:8px}
+.nav-tab{padding:7px 15px;border-radius:8px;cursor:pointer;font-size:14.5px;color:var(--ink2);font-weight:500;border:1px solid transparent;background:none;font-family:var(--sans)}
+.nav-tab:hover{background:var(--paper2)}
+.nav-tab.active{background:#1f2a37;color:var(--paper)}
+.progress-wrap{margin-left:auto;display:flex;align-items:center;gap:10px;font-size:12.5px;color:var(--ink3);white-space:nowrap}
+.progress-bar{width:110px;height:7px;background:var(--paper2);border-radius:4px;overflow:hidden;border:1px solid var(--line)}
+.progress-fill{height:100%;background:linear-gradient(90deg,#2f6498,#2f7d52);width:0%;transition:width .5s}
+
+/* ============ 视图通用 ============ */
+.view{display:none;position:relative;z-index:1;max-width:1180px;margin:0 auto;padding:34px 26px 90px}
+.view.active{display:block;animation:fade .35s ease}
+@keyframes fade{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}
+.section-eyebrow{font-size:12.5px;letter-spacing:3px;color:var(--ink3);font-weight:500;margin-bottom:10px}
+
+/* ============ 首页 Hero ============ */
+.hero{padding:46px 0 30px;border-bottom:1px solid var(--line);margin-bottom:38px}
+.hero h1{font-family:var(--serif);font-weight:900;font-size:clamp(32px,5vw,52px);line-height:1.25;letter-spacing:1px}
+.hero h1 em{font-style:normal;color:var(--m1);position:relative}
+.hero p.lead{margin-top:18px;font-size:17px;color:var(--ink2);max-width:720px}
+.hero .formula{margin-top:24px;display:inline-flex;align-items:center;gap:14px;background:var(--card);border:1px solid var(--line2);border-radius:12px;padding:14px 24px;font-family:var(--serif);font-size:17px;box-shadow:3px 3px 0 var(--paper2)}
+.hero .formula b{font-size:20px}
+.hero .formula .x{color:var(--m3);font-weight:900}
+.hero-actions{margin-top:26px;display:flex;gap:12px;flex-wrap:wrap}
+.btn{font-family:var(--sans);font-size:14.5px;font-weight:500;padding:10px 22px;border-radius:9px;cursor:pointer;border:1px solid var(--line2);background:var(--card);color:var(--ink);transition:transform .15s,box-shadow .15s}
+.btn:hover{transform:translateY(-2px);box-shadow:0 5px 14px rgba(50,40,20,.12)}
+.btn-primary{background:#1f2a37;color:var(--paper);border-color:#1f2a37}
+.btn-m1{background:var(--m1);color:#fff;border-color:var(--m1)}
+
+/* ============ 模块分组与卡片网格 ============ */
+.module-block{margin-bottom:44px}
+.module-head{display:flex;align-items:baseline;gap:13px;margin-bottom:17px;padding-bottom:11px;border-bottom:2px solid var(--ink)}
+.module-head .tag{font-size:12px;font-weight:700;color:#fff;padding:3px 11px;border-radius:20px}
+.module-head h2{font-family:var(--serif);font-size:23px;font-weight:700}
+.module-head .count{margin-left:auto;font-size:13px;color:var(--ink3)}
+.cards-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(255px,1fr));gap:15px}
+.point-card{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:18px 18px 16px;cursor:pointer;position:relative;transition:transform .18s,box-shadow .18s;overflow:hidden}
+.point-card::before{content:"";position:absolute;left:0;top:0;bottom:0;width:4px}
+.point-card:hover{transform:translateY(-3px);box-shadow:0 9px 22px rgba(50,40,20,.13)}
+.point-card .num{font-family:var(--serif);font-size:13px;font-weight:700;letter-spacing:1px}
+.point-card h3{font-family:var(--serif);font-size:17.5px;font-weight:700;margin:7px 0 8px;line-height:1.45}
+.point-card .core{font-size:13.5px;color:var(--ink2);line-height:1.6}
+.point-card .done-flag{position:absolute;top:13px;right:13px;font-size:11px;color:var(--m2);font-weight:700;display:none}
+.point-card.done .done-flag{display:block}
+.m1 .num,.m1::before{color:var(--m1);background:var(--m1)} .m1 .num{background:none}
+.m2 .num,.m2::before{color:var(--m2);background:var(--m2)} .m2 .num{background:none}
+.m3 .num,.m3::before{color:var(--m3);background:var(--m3)} .m3 .num{background:none}
+.m4 .num,.m4::before{color:var(--m4);background:var(--m4)} .m4 .num{background:none}
+
+/* ============ 笔记视图 ============ */
+.notes-layout{display:grid;grid-template-columns:230px 1fr;gap:34px;align-items:start}
+.toc{position:sticky;top:78px;max-height:calc(100vh - 96px);overflow-y:auto;padding-right:6px}
+.toc-title{font-size:12px;letter-spacing:2px;color:var(--ink3);margin-bottom:10px;font-weight:700}
+.toc-mod{margin-bottom:14px}
+.toc-mod .tm{font-size:12.5px;font-weight:700;margin-bottom:5px;padding-left:9px;border-left:3px solid}
+.toc-mod a{display:block;font-size:13.5px;color:var(--ink2);text-decoration:none;padding:4px 9px 4px 14px;border-radius:6px;line-height:1.5}
+.toc-mod a:hover{background:var(--paper2)}
+.toc-mod a.active{background:#1f2a37;color:var(--paper)}
+.notes-body{min-width:0}
+.mod-divider{margin:56px 0 30px}
+.mod-divider:first-child{margin-top:6px}
+.mod-divider .tag{font-size:12px;font-weight:700;color:#fff;padding:3px 12px;border-radius:20px}
+.mod-divider h2{font-family:var(--serif);font-size:26px;margin-top:12px;font-weight:900}
+.chapter{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:30px 34px;margin-bottom:26px;scroll-margin-top:80px}
+.chapter-head{display:flex;align-items:center;gap:15px;margin-bottom:8px}
+.chapter-head .num{font-family:var(--serif);font-size:30px;font-weight:900;line-height:1}
+.chapter h3.ch-title{font-family:var(--serif);font-size:23px;font-weight:700;line-height:1.4}
+.chapter .h4{font-family:var(--serif);font-size:17px;font-weight:700;margin:24px 0 9px;padding-left:11px;border-left:4px solid var(--line2)}
+.chapter p{margin-bottom:11px;color:var(--ink);font-size:15.5px}
+.chapter ul{margin:0 0 12px 22px}
+.chapter li{margin-bottom:7px;font-size:15px}
+.chapter .case{background:var(--paper);border:1px dashed var(--line2);border-radius:9px;padding:13px 17px;margin:12px 0;font-size:14.5px;color:var(--ink2)}
+.chapter .takeaway{margin-top:18px;background:#f3ead2;border:1px solid #e2d2a4;border-radius:9px;padding:13px 17px;font-size:14.5px;display:flex;gap:10px}
+.chapter .takeaway b{white-space:nowrap;color:#8a6d2a}
+.chapter-foot{margin-top:20px;padding-top:16px;border-top:1px solid var(--line);display:flex;align-items:center;gap:12px}
+.chapter-foot .btn{padding:7px 17px;font-size:13.5px}
+.read-state{font-size:13px;color:var(--m2);font-weight:700;margin-left:auto}
+mark{padding:1px 5px;border-radius:4px;font-size:.94em;font-family:var(--sans)}
+mark.k{background:var(--hl)} mark.w{background:var(--hl-warn);color:#7a2d1f} mark.m{background:var(--hl-method);color:#1e5631}
+mark[data-tip]{position:relative;cursor:help;border-bottom:1px dotted rgba(0,0,0,.3)}
+mark[data-tip]:hover::after{content:attr(data-tip);position:absolute;left:0;bottom:135%;background:#1f2a37;color:#fff;font-size:12.5px;font-weight:400;padding:7px 11px;border-radius:7px;width:max-content;max-width:280px;white-space:normal;line-height:1.6;z-index:50;box-shadow:0 4px 14px rgba(0,0,0,.25)}
+.quote-eg{font-style:normal;background:var(--m1bg);border-left:3px solid var(--m1);padding:2px 7px;border-radius:4px;font-size:.95em}
+
+/* ============ 互动实验室 ============ */
+.lab-intro{background:var(--card);border:1px solid var(--line);border-radius:13px;padding:22px 28px;margin-bottom:30px}
+.lab-intro h2{font-family:var(--serif);font-size:24px;margin-bottom:8px}
+.lab-grid{display:grid;grid-template-columns:1fr 1fr;gap:22px}
+.lab-widget{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:24px 26px}
+.lab-widget.full{grid-column:1/-1}
+.lab-widget .w-head{display:flex;align-items:center;gap:11px;margin-bottom:6px}
+.lab-widget .w-num{font-family:var(--serif);font-weight:900;font-size:14px;background:#1f2a37;color:var(--paper);width:30px;height:30px;border-radius:8px;display:grid;place-items:center}
+.lab-widget h3{font-family:var(--serif);font-size:19px;font-weight:700}
+.lab-widget .w-desc{font-size:13.5px;color:var(--ink3);margin-bottom:17px}
+.chart{width:100%;height:280px}
+/* 拖拽分类 */
+.drag-pool{min-height:64px;background:var(--paper);border:1px dashed var(--line2);border-radius:10px;padding:11px;margin-bottom:13px;display:flex;flex-wrap:wrap;gap:9px;align-content:flex-start}
+.drag-item{background:#fff;border:1px solid var(--line2);border-radius:8px;padding:7px 13px;font-size:13.5px;cursor:grab;user-select:none;box-shadow:1px 2px 4px rgba(0,0,0,.06)}
+.drag-item.dragging{opacity:.4}
+.drag-item.correct{background:var(--m2bg);border-color:var(--m2)}
+.drag-item.wrong{background:var(--hl-warn);border-color:#c0694f}
+.drop-row{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.drop-zone{min-height:96px;border:2px dashed;border-radius:10px;padding:11px;display:flex;flex-wrap:wrap;gap:8px;align-content:flex-start;transition:background .2s}
+.drop-zone.fact{border-color:var(--m1);background:var(--m1bg)} .drop-zone.opinion{border-color:var(--m3);background:var(--m3bg)}
+.drop-zone.over{background:#e3d9bd !important}
+.drop-zone .dz-label{width:100%;font-size:12.5px;font-weight:700;letter-spacing:1px}
+.quiz-feedback{margin-top:12px;font-size:13.5px;min-height:22px;color:var(--m2);font-weight:500}
+/* 小测验通用 */
+.quiz-q{font-size:15px;margin-bottom:13px;font-weight:500;line-height:1.7;background:var(--paper);padding:12px 15px;border-radius:9px;border:1px solid var(--line)}
+.quz-opts{display:grid;gap:9px}
+.quiz-opt{text-align:left;background:#fff;border:1px solid var(--line2);border-radius:9px;padding:10px 15px;font-size:14px;cursor:pointer;font-family:var(--sans);line-height:1.6;transition:all .15s}
+.quiz-opt:hover{border-color:var(--ink)}
+.quiz-opt.right{background:var(--m2bg);border-color:var(--m2);font-weight:700}
+.quiz-opt.bad{background:var(--hl-warn);border-color:#c0694f}
+.quiz-nav{display:flex;gap:10px;margin-top:15px;align-items:center}
+.quiz-progress{font-size:12.5px;color:var(--ink3);margin-left:auto}
+/* 开关按钮组 */
+.seg{display:inline-flex;background:var(--paper2);border-radius:9px;padding:3px;gap:3px;margin-bottom:14px;flex-wrap:wrap}
+.seg button{border:none;background:transparent;padding:7px 15px;border-radius:7px;font-size:13.5px;cursor:pointer;font-family:var(--sans);color:var(--ink2);font-weight:500}
+.seg button.on{background:#fff;color:var(--ink);box-shadow:0 1px 4px rgba(0,0,0,.12);font-weight:700}
+/* 双盲流程 */
+.flow-steps{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-bottom:16px}
+.flow-step{border:2px solid var(--line2);border-radius:10px;padding:13px 12px;cursor:pointer;text-align:center;background:var(--paper);transition:all .2s}
+.flow-step .fs-n{font-family:var(--serif);font-weight:900;font-size:16px;color:var(--ink3)}
+.flow-step .fs-t{font-size:13.5px;font-weight:700;margin:4px 0}
+.flow-step.active{border-color:var(--m4);background:var(--m4bg)}
+.flow-detail{background:var(--paper);border-radius:10px;padding:15px 18px;font-size:14px;min-height:96px;border:1px solid var(--line)}
+.flow-detail b{color:var(--m4)}
+
+/* ============ Anki 复习 ============ */
+.review-top{text-align:center;padding:30px 0 26px}
+.review-top h2{font-family:var(--serif);font-size:30px;font-weight:900}
+.review-top p{color:var(--ink2);margin-top:8px;font-size:15px}
+.review-controls{display:flex;justify-content:center;gap:10px;margin:20px 0 8px;flex-wrap:wrap}
+.card-stage{perspective:1600px;max-width:620px;margin:22px auto 0;height:340px;position:relative}
+.flashcard{position:absolute;inset:0;transform-style:preserve-3d;transition:transform .6s cubic-bezier(.4,.1,.2,1);cursor:pointer}
+.flashcard.flipped{transform:rotateY(180deg)}
+.card-face{position:absolute;inset:0;backface-visibility:hidden;-webkit-backface-visibility:hidden;border-radius:18px;
+  background:var(--card);border:1px solid var(--line2);box-shadow:0 12px 34px rgba(50,40,20,.15);
+  display:flex;flex-direction:column;padding:30px 34px}
+.card-back{transform:rotateY(180deg);background:#fdfbf5}
+.card-tag{align-self:flex-start;font-size:11.5px;font-weight:700;padding:3px 11px;border-radius:15px;color:#fff;margin-bottom:18px}
+.card-front-q{font-family:var(--serif);font-size:23px;font-weight:700;line-height:1.6;margin:auto 0;display:flex;align-items:center}
+.card-hint{position:absolute;bottom:22px;left:0;right:0;text-align:center;font-size:12.5px;color:var(--ink3)}
+.card-back-a{font-size:15.5px;line-height:1.85;overflow-y:auto;color:var(--ink)}
+.card-rate{display:flex;justify-content:center;gap:12px;margin-top:22px}
+.rate-btn{padding:10px 24px;border-radius:10px;font-size:14px;font-weight:500;cursor:pointer;border:1px solid var(--line2);background:var(--card);font-family:var(--sans)}
+.rate-btn:hover{transform:translateY(-2px)}
+.rate-again{border-color:#c0694f;color:#a33d24} .rate-hard{border-color:var(--m3);color:var(--m3)} .rate-good{border-color:var(--m2);color:var(--m2)}
+.review-stats{display:grid;grid-template-columns:repeat(3,1fr);gap:13px;max-width:620px;margin:30px auto 0}
+.stat-box{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:16px;text-align:center}
+.stat-box .v{font-family:var(--serif);font-size:26px;font-weight:900} .stat-box .l{font-size:12.5px;color:var(--ink3);margin-top:3px}
+#masteryChart{max-width:620px;margin:26px auto 0;height:300px}
+.review-filters{display:flex;gap:8px;justify-content:center;flex-wrap:wrap;margin-top:14px}
+.review-filters .seg button{font-size:12.5px;padding:6px 12px}
+
+/* ============ Toast ============ */
+.toast{position:fixed;bottom:30px;left:50%;transform:translateX(-50%) translateY(80px);background:#1f2a37;color:#fff;
+  padding:12px 24px;border-radius:10px;font-size:14px;z-index:300;transition:transform .35s;box-shadow:0 8px 24px rgba(0,0,0,.3)}
+.toast.show{transform:translateX(-50%) translateY(0)}
+
+/* ============ 响应式 ============ */
+@media(max-width:900px){
+  .notes-layout{grid-template-columns:1fr}
+  .toc{position:static;max-height:none;display:none} .toc.open{display:block}
+  .lab-grid{grid-template-columns:1fr}
+  .flow-steps{grid-template-columns:repeat(2,1fr)}
+  .progress-wrap{display:none}
+  .mobile-toc-btn{display:inline-flex !important}
+}
+@media(max-width:560px){
+  .view{padding:22px 15px 70px}
+  .chapter{padding:22px 18px}
+  .nav-tab{padding:6px 10px;font-size:13px}
+  .cards-grid{grid-template-columns:1fr}
+  .card-stage{height:380px}
+  .drop-row{grid-template-columns:1fr}
+}
+.mobile-toc-btn{display:none;align-items:center;gap:6px}
+@media(min-width:1050px){
+  .cards-grid:has(> :nth-child(5):last-child){grid-template-columns:repeat(3,1fr)}
+}
+</style>
+</head>
+<body>
+
+<!-- ============ 顶部导航 ============ -->
+<nav class="topbar">
+  <div class="logo" onclick="route('home')"><span class="mark">S</span>科学思维十五讲</div>
+  <div class="nav-tabs">
+    <button class="nav-tab active" data-view="home" onclick="route('home')">总览</button>
+    <button class="nav-tab" data-view="notes" onclick="route('notes')">笔记</button>
+    <button class="nav-tab" data-view="lab" onclick="route('lab')">互动实验室</button>
+    <button class="nav-tab" data-view="review" onclick="route('review')">复习卡片</button>
+  </div>
+  <div class="progress-wrap">
+    <div class="progress-bar"><div class="progress-fill" id="progressFill"></div></div>
+    <span id="progressText">0 / 15</span>
+  </div>
+</nav>
+
+<!-- ============ 视图：首页 ============ -->
+<section class="view active" id="view-home">
+  <div class="hero">
+    <div class="section-eyebrow">SCIENTIFIC THINKING · 15 ESSENTIALS</div>
+    <h1>像科学家一样<em>思考</em>，<br>是现代人的必修课</h1>
+    <p class="lead">科学教育的最终目标是提升科学素养。知识会过时，但思维方式可以受用一生。本手册把科学思维整理为十五个明确的知识点，分为四大模块，配合互动演示与记忆卡片，帮你真正掌握它们。</p>
+    <div class="formula"><span>科学素养</span><span>=</span><b style="color:var(--m1)">科学知识</b><span class="x">×</span><b style="color:var(--m4)">科学思维</b></div>
+    <div class="hero-actions">
+      <button class="btn btn-primary" onclick="route('notes')">开始阅读笔记</button>
+      <button class="btn btn-m1" onclick="route('lab')">进入互动实验室</button>
+      <button class="btn" onclick="route('review')">抽卡复习</button>
+    </div>
+  </div>
+  <div id="modulesWrap"></div>
+</section>
+
+<!-- ============ 视图：笔记 ============ -->
+<section class="view" id="view-notes">
+  <button class="btn mobile-toc-btn" onclick="document.querySelector('.toc').classList.toggle('open')">目录</button>
+  <div class="notes-layout">
+    <aside class="toc" id="toc"></aside>
+    <article class="notes-body" id="notesBody"></article>
+  </div>
+</section>
+
+<!-- ============ 视图：互动实验室 ============ -->
+<section class="view" id="view-lab">
+  <div class="lab-intro">
+    <h2>互动实验室</h2>
+    <p style="color:var(--ink2);font-size:14.5px">只读不练，等于没学。这里把最容易混淆、最依赖直觉的七个知识点做成了可操作的演示与测验，动手玩一遍，胜过读十遍。</p>
+  </div>
+  <div class="lab-grid">
+    <!-- W1 事实观点拖拽 -->
+    <div class="lab-widget">
+      <div class="w-head"><span class="w-num">01</span><h3>事实还是观点？拖一拖</h3></div>
+      <p class="w-desc">把句子拖进正确的筐。注意：能被证实或证伪的，才是事实陈述。</p>
+      <div class="drag-pool" id="fvPool"></div>
+      <div class="drop-row">
+        <div class="drop-zone fact" id="fvFact"><span class="dz-label">事实陈述（可证实 / 证伪）</span></div>
+        <div class="drop-zone opinion" id="fvOpinion"><span class="dz-label">观点陈述（态度 / 偏好）</span></div>
+      </div>
+      <div class="quiz-feedback" id="fvFb"></div>
+      <div class="quiz-nav"><button class="btn" onclick="resetFV()">重置</button><span class="quiz-progress" id="fvProg"></span></div>
+    </div>
+
+    <!-- W2 信源金字塔 -->
+    <div class="lab-widget">
+      <div class="w-head"><span class="w-num">04</span><h3>信源金字塔</h3></div>
+      <p class="w-desc">点击各层查看定义与例子；信源等级越高，信息通常越可靠。</p>
+      <div id="pyramidChart" class="chart" style="height:330px"></div>
+      <div class="flow-detail" id="pyramidDetail" style="min-height:70px"><b>提示：</b>点击金字塔中的任意一层。</div>
+    </div>
+
+    <!-- W3 选择性记忆 -->
+    <div class="lab-widget full">
+      <div class="w-head"><span class="w-num">05</span><h3>选择性记忆模拟器：程序员真的更容易生女孩吗？</h3></div>
+      <p class="w-desc">模拟 120 个程序员家庭的新生儿性别（真实概率男女各半）。切换两种视角，看看直觉如何欺骗你。</p>
+      <div class="seg" id="memSeg">
+        <button class="on" data-m="all">看全部样本（统计眼光）</button>
+        <button data-m="select">只看“被记住”的案例（直觉）</button>
+      </div>
+      <div id="memChart" class="chart" style="height:300px"></div>
+      <div class="quiz-feedback" id="memFb"></div>
+      <div class="quiz-nav"><button class="btn" onclick="genMem()">重新模拟 120 个家庭</button></div>
+    </div>
+
+    <!-- W4 因果相关 -->
+    <div class="lab-widget full">
+      <div class="w-head"><span class="w-num">07</span><h3>先后、相关还是因果？</h3></div>
+      <p class="w-desc">三组经典案例。散点越整齐代表相关性越强，但相关永远不等于因果——找出藏在背后的第三个变量。</p>
+      <div class="seg" id="corrSeg">
+        <button class="on" data-c="icecream">雪糕销量 × 溺亡人数</button>
+        <button data-c="beer">喝啤酒 × 肚子大小</button>
+        <button data-c="smoke">吸烟量 × 肺癌率</button>
+      </div>
+      <div id="corrChart" class="chart" style="height:320px"></div>
+      <div class="flow-detail" id="corrDetail"></div>
+    </div>
+
+    <!-- W5 谬误捕手 -->
+    <div class="lab-widget">
+      <div class="w-head"><span class="w-num">08</span><h3>谬误捕手测验</h3></div>
+      <p class="w-desc">判断每段话犯了哪一种逻辑谬误。</p>
+      <div id="fallacyBox"></div>
+    </div>
+
+    <!-- W6 双盲实验 -->
+    <div class="lab-widget">
+      <div class="w-head"><span class="w-num">14</span><h3>双盲实验：少一步会怎样？</h3></div>
+      <p class="w-desc">检验药物有效性的金标准，由四个环节构成。点击查看每个环节的作用。</p>
+      <div class="flow-steps" id="rctSteps"></div>
+      <div class="flow-detail" id="rctDetail"><b>提示：</b>点击上方任意环节。</div>
+    </div>
+
+    <!-- W7 可证伪性 -->
+    <div class="lab-widget full">
+      <div class="w-head"><span class="w-num">15</span><h3>命题判官：它具备可证伪性吗？</h3></div>
+      <p class="w-desc">波普尔：科学命题必须在逻辑上有可能被某个观察或实验推翻。无法被证伪却自称科学的，是伪科学。</p>
+      <div id="falsifyBox"></div>
+    </div>
+  </div>
+</section>
+
+<!-- ============ 视图：Anki 复习 ============ -->
+<section class="view" id="view-review">
+  <div class="review-top">
+    <h2>Anki 复习卡片</h2>
+    <p>共 <b id="totalCards">0</b> 张卡片 · 评级后“不会”的卡片会更频繁出现</p>
+    <div class="review-controls">
+      <button class="btn btn-primary" onclick="drawCard()">随机抽卡</button>
+      <button class="btn" onclick="drawCard('wrong')">只抽不熟的</button>
+      <button class="btn" onclick="resetReview()">重置进度</button>
+    </div>
+    <div class="review-filters"><div class="seg" id="deckSeg"></div></div>
+  </div>
+  <div class="card-stage">
+    <div class="flashcard" id="flashcard" onclick="flipCard()">
+      <div class="card-face card-front">
+        <span class="card-tag" id="cardTag"></span>
+        <div class="card-front-q" id="cardQ"></div>
+        <div class="card-hint">点击卡片或按空格键查看答案</div>
+      </div>
+      <div class="card-face card-back">
+        <span class="card-tag" id="cardTag2"></span>
+        <div class="card-back-a" id="cardA"></div>
+        <div class="card-hint">点击返回问题</div>
+      </div>
+    </div>
+  </div>
+  <div class="card-rate" id="cardRate" style="visibility:hidden">
+    <button class="rate-btn rate-again" onclick="rateCard(0)">不会</button>
+    <button class="rate-btn rate-hard" onclick="rateCard(1)">模糊</button>
+    <button class="rate-btn rate-good" onclick="rateCard(2)">认识</button>
+  </div>
+  <div class="review-stats">
+    <div class="stat-box"><div class="v" id="stGood">0</div><div class="l">已掌握</div></div>
+    <div class="stat-box"><div class="v" id="stHard">0</div><div class="l">待巩固</div></div>
+    <div class="stat-box"><div class="v" id="stAgain">0</div><div class="l">不会</div></div>
+  </div>
+  <div id="masteryChart"></div>
+</section>
+
+<div class="toast" id="toast"></div>
+
+<script>
+/* ================= 模块与章节数据 ================= */
+const MODULES=[
+ {id:'m1',name:'信息辨别力',color:getComputedStyle(document.documentElement).getPropertyValue('--m1').trim(),pts:[1,3,4],desc:'在信息洪流中分清什么是真的、谁说的更可信'},
+ {id:'m2',name:'因果与统计',color:getComputedStyle(document.documentElement).getPropertyValue('--m2').trim(),pts:[5,6,7,13],desc:'用频次和概率看世界，不把巧合当因果'},
+ {id:'m3',name:'逻辑与论证',color:getComputedStyle(document.documentElement).getPropertyValue('--m3').trim(),pts:[2,8,9,10,12],desc:'识别好论证与坏论证，正确地建立证据与结论'},
+ {id:'m4',name:'科学方法论',color:getComputedStyle(document.documentElement).getPropertyValue('--m4').trim(),pts:[11,14,15],desc:'理解科学共同体如何运作、知识如何被检验'}
+];
+const CHAPTERS={
+1:{t:'能区分事实和观点',mod:'m1',core:'事实可被客观证实或证伪；观点是个人态度与偏好。',sec:[
+ {h:'核心定义',html:'<p><mark class="k" data-tip="描述客观世界中可被证实或证伪的东西">事实陈述</mark>：描述在客观世界中可被<mark class="k">证实或证伪</mark>的东西。</p><p><mark class="k" data-tip="描述观察事实时个人所处的位置或采取的态度">观点陈述</mark>：描述观察事实时个人所处的位置或采取的态度。</p><div class="case">“这只苹果是红色的”——事实陈述；“我喜欢红色的苹果”——观点陈述；<br>“<b>人人都喜欢红色的苹果</b>”——<b>仍是事实陈述</b>，因为只要找到一个不喜欢的人，它就被证伪了。</div>'},
+ {h:'为什么重要',html:'<p>甲说：“没有科学家有兴趣证明上帝是否存在。”（事实陈述）乙反驳：“科学家应该努力去寻找上帝。”——乙并没有真正反驳，他只是在做<mark class="w">观点陈述</mark>，两者并不矛盾。</p><p>有效的反驳只有两种：</p><ul><li><mark class="m">举反例证伪事实</mark>：“某某科学家就在做这件事。”</li><li><mark class="m">先确认事实，再探讨观点</mark>：“即便这是事实，我希望它改变。”</li></ul>'}],
+ tk:'能区分事实与观点，双方才能在同一个频道谈话，避免无意义争执。'},
+2:{t:'了解科学和技术的区别',mod:'m3',core:'科学发现自然规律，技术创造实用工具。',sec:[
+ {h:'核心定义',html:'<p><mark class="k">科学</mark>的目的：<b>发现自然规律</b>，成果是纯理论性的，用论文即可表达，如牛顿定律、相对论、进化论、元素周期表，称为<mark class="k">科学发现</mark>。</p><p><mark class="k">技术</mark>的目的：<b>创造有实用价值的工具</b>，成果要有实际体现、改变生活，如四大发明、白炽灯、交流输电系统。搞科学的是<mark class="m">科学家</mark>，搞技术的是<mark class="m">工程师</mark>。</p>'},
+ {h:'一个例子：爆破拆楼',html:'<p>炸药放哪里、放多少，无法试验、必须一次成功。</p><ul><li><mark class="m">科学</mark>：研究爆炸与倒塌规律，精确计算炸药位置与用量——科学家设计方案。</li><li><mark class="m">技术</mark>：在水泥墙地面打洞、严丝合缝安放炸药、精确控制——工程师落实行动。</li></ul><p>一般来说科学发现的意义更深远，但重大技术发明也能反过来推动科学发现。</p>'}],
+ tk:'比“发明了什么”更酷的是“发现了什么”，但二者常常彼此推动。'},
+3:{t:'知道什么是信源',mod:'m1',core:'信源是信息第一次被创造出来的地方，而不是你听到它的地方。',sec:[
+ {h:'核心定义',html:'<p><mark class="k">信源</mark>：信息的<mark class="k" data-tip="信息第一次被创造、发表出来的地方">最初来源</mark>。“我从央视看到的”并不等于找到了信源。</p><p><mark class="m">一手信源</mark>：信息第一次发表的地方（第一手资料）；<mark class="w">二手信源</mark>：所有转述消息的地方，可能出现转述错误、信息丢失、过度解读、断章取义。</p>'},
+ {h:'案例：尼比鲁星球辟谣',html:'<div class="case">“尼比鲁星球 2017 年撞击地球”的辟谣消息，多数人以为信源是央视（2017-09-20 报道）。但央视引用的美国专家辟谣视频，最初发表于 <b>2011-10-21 的 YouTube</b>——那才是真正的一手信源。</div><p>粗略判断一篇文章的可信度，不用查证具体内容，只看它以<mark class="m">一手信源为主还是二手信源为主</mark>，大致可知作者的用心程度。</p>'}],
+ tk:'找到信息第一次出现的地方，是辨别信息真伪的第一步。'},
+4:{t:'能大致判定信源可靠度',mod:'m1',core:'用“信源金字塔”快速判断可靠程度，并交叉印证。',sec:[
+ {h:'信源金字塔',html:'<p>信息可靠度与信源可靠度成正比。从高到低：</p><ul><li><mark class="m">一级</mark>：国际组织书面材料，如 WHO、IPCC、联合国机构</li><li><mark class="m">二级</mark>：高质量科学期刊，Cell / Nature / Science（CNS）与自然指数期刊</li><li><mark class="m">三级</mark>：国家级机构材料与教科书，如中科院、NASA、FDA</li><li><mark class="m">四级</mark>：SCI / SCIE 收录的核心期刊</li><li><mark class="m">五级</mark>：口碑良好的专业垂直媒体</li><li><mark class="m">六级</mark>：综合性大媒体</li><li><mark class="m">七级</mark>：专家个人著作、访谈；再往下直到道听途说</li></ul>'},
+ {h:'重要补充',html:'<p>这只是<mark class="k">快速鉴别的大致方法</mark>，不能拘泥、不能钻牛角尖。所有分级都是人为划定的界线，真实世界存在大量跨界情况。</p><p>做决策时必须<mark class="w">交叉比对、互相印证</mark>。</p>'}],
+ tk:'用金字塔初判，用交叉印证定夺；分级是工具不是教条。'},
+5:{t:'统计眼光：看现象背后的频次与概率',mod:'m2',core:'别被感觉和个例欺骗，用频次与概率做决策。',sec:[
+ {h:'两层含义',html:'<p><b>一、不要被感觉欺骗。</b>人有<mark class="k" data-tip="符合预期的事容易记住，不符合的容易忘记">选择性遗忘</mark>机制：先入为主后，符合预期的事容易记住，不符合的容易忘记。“程序员容易生女孩”“自己是乌鸦嘴”“总排到慢队”，多半是选择性记忆。</p><p><b>二、不要把特殊现象当普遍规律。</b>“吸烟有害健康——那可不一定，我二舅九十多了还在抽”，每个反例都可能是真的，但<mark class="w">不能成为决策依据</mark>。</p>'},
+ {h:'正态分布',html:'<p>生活中大多数现象符合<mark class="k">正态分布</mark>：中间最多，两头依次减少。反常现象刻意找总能找到，但落到你自己身上，大概率事件才是主角。</p>'}],
+ tk:'别用“那可不一定”做决策，我们一生遇到的绝大多数都是大概率事件。'},
+6:{t:'能区分先后关系和因果关系',mod:'m2',core:'先后只是时间顺序，因果需要证明前者必然导致后者。',sec:[
+ {h:'核心区别',html:'<p><mark class="k">因果关系</mark>：前一事件的发生必然导致后一事件发生。<mark class="k">先后关系</mark>：两事件在时间上一先一后。因果必符合先后，但<mark class="w" data-tip="鸡叫之后天亮，不代表鸡叫亮了天">先后不一定是因果</mark>。</p><div class="case">富人往往身材健硕，不能得出“要想富先瘦身”——多数人是<mark class="m">先富起来，才有条件健身</mark>，顺序不能颠倒。</div>'},
+ {h:'案例：癌症自愈的无数版本',html:'<p>有人癌细胞消失，此前他找过主任医师、老中医、住持，练过瑜伽、搬去山里、做过怪梦——这些事件都真实且在先，但仅凭先后就被当成因果，传诵中还不断被强化。真正原因可能只是<mark class="m">自愈</mark>。</p><p>广告宣称“签约后利润增长 100%”，只能证明先后，<mark class="w">无法证明因果</mark>。</p>'}],
+ tk:'不经过科学方法研究，就无法从先后关系中确定因果关系。'},
+7:{t:'能区分因果性和相关性',mod:'m2',core:'相关只是相生相伴，因果需要严格实验确认。',sec:[
+ {h:'核心区别',html:'<p><mark class="k">相关性</mark>：两事件总是相生相伴、表面有关联，但不一定相互影响。有因果必有相关，但<mark class="w">有相关不一定有因果</mark>。</p><div class="case">“啤酒肚”：喝啤酒与肚子大只是相关。真正原因是啤酒总伴随夜宵烧烤、热量高、运动少——<mark class="m">控制热量、多运动，天天喝啤酒也不会胖</mark>。</div><div class="case">雪糕销量与溺亡人数同高同低，原因都是<mark class="m">天气热</mark>这个第三变量。</p></div>'},
+ {h:'如何确认因果',html:'<p>认定因果非常困难，常需严格实验。医学上确认微生物致病的<mark class="k">四步法</mark>：①从病人身上分离微生物；②体外能单独培养；③植入动物能产生类似症状；④从发病动物身上再次分离出该微生物。</p><p>绝大多数软广告都在用<mark class="w">相关性冒充因果性</mark>。没有明确证据时，不要轻易建立因果关系。</p>'}],
+ tk:'先找全所有相关事件，再用实验逐一排除或验证，别凭直觉定因果。'},
+8:{t:'懂得基本的逻辑规则',mod:'m3',core:'识别形式谬误与非形式谬误，只看论证结构就能拆穿很多诡辩。',sec:[
+ {h:'三种形式谬误',html:'<ul><li><mark class="w">逆命题当真</mark>：伟大理论常不被接受，不代表“不被接受的就是伟大理论”。</li><li><mark class="w">整体与部分互推</mark>：香蕉、黄鱼单独都好吃，不代表香蕉炒黄鱼好吃；每味药材治某病，不代表混在一起包治百病。</li><li><mark class="w">循环论证</mark>：把待证明的结论藏进证明过程，如“你不信上火？吃瓜子后上火了，这下该信了吧”。</li></ul><p>驳斥形式谬误<mark class="m">不需要是领域专家</mark>，只分析论证结构即可。“你没学过就别批评”本身就是不讲逻辑。</p>'},
+ {h:'常见非形式谬误',html:'<ul><li><mark class="k">诉诸结果</mark>：用结果好坏证明观点是否成立</li><li><mark class="k">稻草人</mark>：歪曲对方观点再加以驳斥</li><li><mark class="k">简单归纳</mark>：样本太小、不具代表性就下结论</li><li><mark class="k">万能定义法</mark>：随时用结果重定义原因（“不是真正的苏格兰人”）</li><li><mark class="k">举证责任倒置</mark>：让对方证明“不可能”</li><li><mark class="k">把无知当证据</mark>：自己不理解就断定为假</li><li><mark class="k">把偶然当必然</mark>：放大小概率后果来反对</li><li><mark class="k">对人不对事</mark>：不驳观点而攻击人品</li><li><mark class="k">诉诸无关权威</mark>：科学家跨领域发言并不可信</li><li><mark class="k">虚假两难</mark>：人为制造非此即彼（“不转不是中国人”）</li></ul>'}],
+ tk:'谬误在论证结构里，不需要专业背景也能识别——盯住论证本身。'},
+9:{t:'知道什么是类比，什么是逻辑推演',mod:'m3',core:'类比帮助理解但不是论证；逻辑推演才是可靠的证明。',sec:[
+ {h:'类比论证',html:'<p><mark class="k">类比论证</mark>：把论证建立在比喻上。“人类不能和外星人沟通，就像人和蚂蚁无法沟通”——它没有论证<mark class="w">为什么可以把人比作蚂蚁</mark>，就直接当作结果。</p><p>“虫子都不吃转基因，人吃了能没事？”“把国家类比成公司”“把阴阳五行类比成数学模型”——类比得出的结论<mark class="w">错误居多</mark>，哪怕最恰当的类比也只是帮助理解，并非有效论证。</p>'},
+ {h:'逻辑推演',html:'<p><mark class="k">逻辑推演</mark>：用形式逻辑论证。先建立两条公理：①数学是宇宙普适规律；②智慧文明都能掌握基本数学。若同意，则外星人可通过<mark class="m">数学作为中介</mark>与人类沟通；若不同意，就回到两个更基本的问题上讨论。</p><p>推演可能有漏洞，但方法本身可靠——<mark class="m">把复杂问题归结到更基本的共识上</mark>，这才是值得推崇的论证方式。</p>'}],
+ tk:'类比是修辞，推演是论证；好讨论把分歧归结到更基本的前提。'},
+10:{t:'了解“谁主张谁举证”',mod:'m3',core:'提出存在性或因果主张的一方负有举证责任。',sec:[
+ {h:'举证责任',html:'<p><mark class="k">举证责任</mark>：观点需要证据支持时，提出观点的一方负有举证义务。警察指控人偷东西，举证责任在警方，<mark class="m">任何人无须自证清白</mark>。</p><p>日常讨论中，提出<mark class="k">“存在性”主张</mark>的一方举证：“金字塔是外星人建的”，该由主张者拿证据，而不是要求对方证明“不是外星人又是谁建的”。主张<mark class="k">因果关系</mark>存在的一方同样要举证，如“吹冷风能引起感冒”。</p>'},
+ {h:'先统一证据标准',html:'<p>讨论前，双方应先对<mark class="w">什么样的证据有效</mark>达成一致。若无论对方举出什么证据都表示不采信，同样是抬杠。</p>'}],
+ tk:'非凡主张需要非凡证据；让反对者自证清白是典型的抬杠。'},
+11:{t:'了解科学共同体是怎么回事',mod:'m4',core:'遵守共同研究规则的人自动加入，核心规则是同行评审。',sec:[
+ {h:'它是什么',html:'<p><mark class="k">科学共同体</mark>：广义上是所有认同科学方法、科学思维的科研与传播者的统称；狭义上是按学科分成的科研组织机构。它没有总部、没有主席，雏形可追溯到十八世纪，规则在二十世纪已非常稳定。</p><p>遵守研究范式与发表规则的人<mark class="m">自动成为一员</mark>，不遵守就自动退出；成员通用的语言是<mark class="k">数学</mark>。</p>'},
+ {h:'作用与核心规则',html:'<p>观点表达主要靠<mark class="m">期刊论文与权威机构白皮书</mark>。共同体承担科学研究、交流、塑造范式、承认奖励与科学传播。</p><p>最重要的规则叫<mark class="w" data-tip="无论名气多大，未经同行评审的观点不能进入科学大厦">同行评审</mark>：无论科学家名气多大，未经同行评审的观点，都不能成为科学大厦的一块砖。</p>'}],
+ tk:'科学共同体是文明火种的守护团，同行评审是它的质量闸门。'},
+12:{t:'能区分哲学思辨和科学思考',mod:'m3',core:'哲学思辨提出假说，科学思考用实验检验假说。',sec:[
+ {h:'两者的区别',html:'<p><mark class="k">哲学思辨</mark>：用纯粹理性思考研判命题，可用分类、概念分析给出自洽答案。<mark class="k">科学思考</mark>：把思辨结论只当作<mark class="w">假说</mark>，然后设计实验去验证。</p>'},
+ {h:'科学思考四步（以“黑丝袜为何显性感”为例）',html:'<ul><li><mark class="m">第一步</mark>：论文库检索前人研究；</li><li><mark class="m">第二步</mark>：先给每个概念下操作定义（如性感的生理指标），再设计实验：随机分实验组与对照组，测量血压、心率等生理指标与问卷意愿；</li><li><mark class="m">第三步</mark>：用思辨提出原因假说（显腿长、显肤白……）；</li><li><mark class="m">第四步</mark>：分别设计实验逐一验证，不成立就循环“提假说—再验证”。</li></ul><p>科学思考看似低效迂腐，却让人类在几百年内取得的智力成就<mark class="m">超越过去数千年之和</mark>。</p>'}],
+ tk:'理性负责提出假说，实验负责裁决真假——科学思考是文明的重大升级。'},
+13:{t:'能明白经验不等于规律',mod:'m2',core:'规律客观必然，经验是主观总结，二者常有偏差。',sec:[
+ {h:'核心区别',html:'<p><mark class="k">规律</mark>：满足指定条件时某事件必然出现，客观存在、不以人的意志为转移。<mark class="k">经验</mark>：个人通过主观感受获得的认知，不同的人对同一规律可能总结出不同经验。</p><div class="case">感冒通常一周左右自愈是客观规律；“洗热水澡好得快”“捂汗好得快”“喝姜茶好得快”只是主观经验，<mark class="w">临床试验发现并不具普适性</mark>。</div>'},
+ {h:'如何对待经验',html:'<p>阴阳五行、四元素学说都是典型的<mark class="m">经验性理论</mark>，代表古人智慧、也曾解决问题，但没有揭示真正的自然规律。</p><p>科学思维要求相信<mark class="m">严格的逻辑推演与受控实验数据</mark>，概括为四个字：<b>逻辑与实证</b>。</p>'}],
+ tk:'经验有时能引路，但按规律办事的成功率远高于按经验办事。'},
+14:{t:'知道大样本随机双盲对照实验的含义',mod:'m4',core:'检验药物有效性的国际金标准，四个环节缺一不可。',sec:[
+ {h:'四个环节',html:'<ul><li><mark class="k">大样本</mark>：研究对象数量足够大（通常 30–50 个起步，有些研究需数千）；</li><li><mark class="k">随机</mark>：选择与分组符合随机原则，尽量覆盖各种情况，可抽签分组；</li><li><mark class="k">双盲</mark>：被测者与给药、评价者都不知道谁在实验组、谁用了安慰剂；</li><li><mark class="k">对照</mark>：至少分实验组与对照组，分别比较结果。</li></ul>'},
+ {h:'为什么缺一不可',html:'<p>感冒等<mark class="m">自限性疾病</mark>会自愈，没有对照就分不清是自己好的还是药的作用；样本不足无法排除个体差异；即使外形一致的淀粉胶囊也会产生<mark class="w" data-tip="注射蒸馏水的人也可能觉得疼痛减轻">安慰剂效应</mark>；给药者若知情，可能无意间暗示真假、产生观察偏见。</p><p>它不只是科学方法，更是逻辑方法，也能研究“哪种红茶更好喝”。</p>'}],
+ tk:'大样本、随机、双盲、对照——排除自愈、个体差异与心理作用的四道防线。'},
+15:{t:'能判断一个观点是否具备可证伪性',mod:'m4',core:'逻辑上可能被推翻的才是科学命题；可证伪度越高，证实后越可信。',sec:[
+ {h:'什么是可证伪性',html:'<p><mark class="k">可证伪性</mark>（卡尔·波普尔提出）：一个命题在逻辑上是否有可能被证明是错的。</p><div class="case"><b>可证伪</b>：“人不会死”“光速在任何参考系不变”“人由类人猿演化而来”——找到一个反例即可推翻，无论反例目前是否已找到。<br><b>不可证伪</b>：“人人都会死”“鬼魂存在”“人类终将灭亡”——找到再多反例也无法穷举证伪。</div>'},
+ {h:'可证伪度与判决实验',html:'<p><mark class="k">可证伪度</mark>：理论被证伪的可能性程度。可证伪度为零却自称科学，就是<mark class="w">伪科学</mark>；可证伪度越高、且经受住考验，可信度越高。</p><p>广义相对论提出“日食时星光偏折”的预言，极易被证伪，这就是<mark class="m">判决实验</mark>——结果可能直接判理论死刑，而一旦被证实，可信度极大。</p>'}],
+ tk:'遇到“能解释一切”的理论，就问：你能提出一个可操作的判决实验吗？'}
+};
+/* ================= Anki 卡片题库 ================= */
+const DECKS=[
+{ch:1,q:'什么是事实陈述？什么是观点陈述？',a:'事实陈述描述客观世界中可被证实或证伪的东西；观点陈述描述观察事实时个人所处的位置或采取的态度。'},
+{ch:1,q:'“人人都喜欢红色的苹果”是事实还是观点？',a:'事实陈述。它可以被客观证实或证伪——只要找到一个不喜欢红苹果的人即被证伪。'},
+{ch:1,q:'对方说出一个事实陈述，有效的两种反驳方式是什么？',a:'①举反例证伪该事实；②先确认事实，再探讨观点（希望事实如何改变）。用观点反驳事实不在同一频道。'},
+{ch:2,q:'科学与技术的目的分别是什么？',a:'科学的目的是发现自然规律，成果是理论性的、用论文表达；技术的目的是创造有实用价值的工具，成果要有实际体现。'},
+{ch:2,q:'爆破拆楼的例子中，哪部分是科学、哪部分是技术？',a:'研究爆炸与倒塌规律、计算炸药位置与用量是科学（科学家）；打洞、安放炸药、精确控制是技术（工程师）。'},
+{ch:3,q:'什么是信源？什么是一手信源？',a:'信源是信息的最初来源，即信息第一次被创造、发表出来的地方。第一次发表处为一手信源，其余转述处为二手信源。'},
+{ch:3,q:'尼比鲁辟谣案例中，真正的信源是哪里？',a:'不是央视（2017年转述），而是美国专家辟谣视频最初发表的地方——2011年10月21日的 YouTube。'},
+{ch:4,q:'信源金字塔一至四级分别是什么？',a:'一级：国际组织书面材料（WHO、IPCC）；二级：CNS等高质量科学期刊；三级：国家级机构材料与教科书（NASA、FDA、中科院）；四级：SCI/SCIE核心期刊。'},
+{ch:4,q:'信源分级使用时最重要的补充原则是什么？',a:'分级只是快速鉴别的大致方法，不能拘泥；做决策必须交叉比对、互相印证，因为真实世界存在大量跨界情况。'},
+{ch:5,q:'用统计眼光看现象的两层含义是什么？',a:'①不要被自己的感觉欺骗（警惕选择性遗忘/记忆）；②不要把特殊现象当普遍规律，要看普遍的大概率情况。'},
+{ch:5,q:'为什么“那可不一定”不能作为决策依据？',a:'多数现象符合正态分布，反常个例刻意找总能找到，但落到自己身上遭遇的是大概率事件；个例不能推翻统计规律。'},
+{ch:6,q:'先后关系与因果关系的区别是什么？',a:'先后关系只是时间上一先一后；因果关系要求前一事件的发生必然导致后一事件。因果必含先后，先后未必是因果。'},
+{ch:6,q:'“富人往往身材健硕，所以要想富先瘦身”错在哪？',a:'忽视了因果必须符合先后顺序：多数人是先富起来，才有时间金钱健身；不能把先后/相关关系倒因为果。'},
+{ch:7,q:'因果性与相关性的关系是什么？',a:'有因果关系一定呈现相关性，但有相关性不一定有因果关系；认定因果通常需要非常严格的科学实验。'},
+{ch:7,q:'雪糕销量与溺亡人数同高同低，说明什么？',a:'只有相关性，没有因果性。共同原因（第三变量）是天气热：天热使雪糕销量和游泳人数同时升高。'},
+{ch:7,q:'医学上确认微生物致病的四个实验步骤是什么？',a:'①从病人身上分离微生物；②体外能单独培养繁殖；③植入动物产生类似症状；④从发病动物身上再次分离出该微生物。'},
+{ch:8,q:'列举三种典型的形式谬误。',a:'①真命题的逆命题当真；②把整体属性当部分属性（或反之）；③循环论证（结论藏在前提中）。'},
+{ch:8,q:'什么是稻草人谬误？',a:'故意用错误甚至滑稽的方式歪曲对方的观点，然后再去证明这个被歪曲的观点是错误的。'},
+{ch:8,q:'什么是举证责任倒置（谬误）？',a:'让对方来证明“不可能”，把证据的缺失当成证据不存在的证据；提出主张的一方本应自己举证。'},
+{ch:8,q:'什么是虚假两难？',a:'论证者设计出实际上并不存在的二元选择，人为制造非此即彼的境地，如“你不转就不是中国人”。'},
+{ch:8,q:'“科学家跨专业发表观点”提醒我们警惕哪种谬误？',a:'诉诸无关权威：科学家再著名，脱离本专业领域也和常人一样可能犯常识错误。'},
+{ch:9,q:'为什么类比不是有效论证？',a:'类比只指出相似性，却没有论证“为什么可以这样比”；它能帮助理解，但结论往往错误居多，不能代替逻辑证明。'},
+{ch:9,q:'用逻辑推演证明“外星人可与人类沟通”的思路是什么？',a:'建立公理：①数学是宇宙普适规律；②智慧文明都掌握基本数学。若同意，则可通过数学作为信息中介沟通；分歧则回到两个更基本的前提讨论。'},
+{ch:10,q:'“谁主张谁举证”在日常讨论中如何适用？',a:'提出存在性或因果关系主张的一方负有举证责任，反对方无须自证；如主张“金字塔是外星人建的”应由主张者举证。'},
+{ch:10,q:'为什么讨论前要先统一“什么证据有效”？',a:'若无论对方举出什么证据都不采信，讨论必然沦为抬杠；需先就证据标准达成一致，再进行论证。'},
+{ch:11,q:'怎样才算科学共同体的一员？',a:'认同并遵守科学研究的基本范式与论文发表原则，即自动成为其中一员；不遵守就自动退出，无需谁来任命。'},
+{ch:11,q:'科学共同体最重要的规则是什么？为什么？',a:'同行评审。无论科学家名气多大，未经同行评审的观点都不能成为科学大厦的一块砖，以此保证知识可靠。'},
+{ch:12,q:'哲学思辨与科学思考的区别是什么？',a:'哲学思辨用纯粹理性思考研判命题、给出答案；科学思考把思辨结论只当作假说，再设计实验去验证。'},
+{ch:12,q:'科学思考检验一个命题的大致流程是什么？',a:'检索前人研究→给概念下操作定义并设计实验（实验组/对照组、测量指标）→用思辨提出原因假说→逐一实验验证，不成立则循环。'},
+{ch:13,q:'规律与经验的区别是什么？',a:'规律是满足条件时事件必然出现、客观存在且不以人意志为转移；经验是个人通过主观感受获得的认知，可能有偏差。'},
+{ch:13,q:'感冒“捂汗好得快”“喝姜茶好得快”属于什么？',a:'属于主观经验，不是规律。现代医学通过严格临床试验发现这些做法不具普适性；感冒一周左右自愈才是客观规律。'},
+{ch:14,q:'大样本随机双盲对照实验的四个环节是什么？',a:'大样本（数量足够）、随机（随机选择与分组）、双盲（被测者与给药评价者都不知分组与真假药）、对照（设实验组与对照组）。'},
+{ch:14,q:'为什么必须“双盲”？',a:'为排除安慰剂效应（心理作用）和给药者的观察偏见、暗示；双方都不知真假药，结果才客观。'},
+{ch:15,q:'什么是可证伪性？',a:'一个命题在逻辑上是否有可能被证明是错的。能找到反例推翻的命题具备可证伪性，反之则不具备。'},
+{ch:15,q:'“鬼魂是存在的”为什么不可证伪？',a:'无论找到多少“没发现鬼魂”的反例，都无法穷举证明鬼魂不存在，命题的陈述形式决定了它不可能被证伪。'},
+{ch:15,q:'什么是判决实验？请举一例。',a:'结果可能直接判定理论生死的实验。如广义相对论预言“日食时星光偏折”，极易被证伪，被证实后理论可信度极大。'},
+{ch:15,q:'可证伪度为零却自称科学的理论叫什么？',a:'伪科学。可证伪度越高、且经受住检验，理论的可信度才越高。'}
+];
+/* ================= 通用工具与路由 ================= */
+const STORE_KEY='st15_v1';
+let store=JSON.parse(localStorage.getItem(STORE_KEY)||'{}');
+store.read=store.read||{}; store.cards=store.cards||{};
+function save(){localStorage.setItem(STORE_KEY,JSON.stringify(store))}
+let toastTimer;
+function toast(msg){const t=document.getElementById('toast');t.textContent=msg;t.classList.add('show');clearTimeout(toastTimer);toastTimer=setTimeout(()=>t.classList.remove('show'),2200)}
+const charts={};
+function route(view,anchor){
+  document.querySelectorAll('.view').forEach(v=>v.classList.remove('active'));
+  document.getElementById('view-'+view).classList.add('active');
+  document.querySelectorAll('.nav-tab').forEach(t=>t.classList.toggle('active',t.dataset.view===view));
+  window.scrollTo(0,0);location.hash=view;
+  if(view==='notes'){renderNotes();if(anchor)setTimeout(()=>{const el=document.getElementById('ch-'+anchor);if(el)el.scrollIntoView()},80)}
+  if(view==='lab') setTimeout(initLabCharts,60);
+  if(view==='review') setTimeout(initReview,60);
+  if(view==='notes'&&anchor)setTimeout(()=>{const el=document.getElementById('ch-'+anchor);if(el)el.scrollIntoView()},80);
+}
+window.addEventListener('hashchange',()=>{const v=location.hash.slice(1);if(['home','notes','lab','review'].includes(v))route(v)});
+
+/* ================= 首页渲染 ================= */
+function renderHome(){
+  const wrap=document.getElementById('modulesWrap');
+  wrap.innerHTML=MODULES.map(m=>`
+    <div class="module-block">
+      <div class="module-head">
+        <span class="tag" style="background:${m.color}">${m.name}</span>
+        <h2>${m.desc}</h2>
+        <span class="count">${m.pts.length} 个要点</span>
+      </div>
+      <div class="cards-grid">
+        ${m.pts.map(n=>{const c=CHAPTERS[n];return `
+        <div class="point-card ${m.id}" onclick="route('notes',${n})">
+          <span class="done-flag">已学 ✓</span>
+          <div class="num">POINT ${String(n).padStart(2,'0')}</div>
+          <h3>${c.t}</h3>
+          <div class="core">${c.core}</div>
+        </div>`}).join('')}
+      </div>
+    </div>`).join('');
+  updateProgress();
+}
+function updateProgress(){
+  const done=Object.values(store.read).filter(Boolean).length;
+  document.getElementById('progressFill').style.width=(done/15*100)+'%';
+  document.getElementById('progressText').textContent=done+' / 15';
+  const nums=[];MODULES.forEach(m=>m.pts.forEach(n=>nums.push(n)));
+  document.querySelectorAll('#modulesWrap .point-card').forEach((el,i)=>{
+    el.classList.toggle('done',!!store.read[nums[i]]);
+  });
+}
+
+/* ================= 笔记渲染 ================= */
+function renderNotes(){
+  document.getElementById('toc').innerHTML='<div class="toc-title">目录</div>'+MODULES.map(m=>`
+    <div class="toc-mod">
+      <div class="tm" style="border-color:${m.color};color:${m.color}">${m.name}</div>
+      ${m.pts.map(n=>`<a href="#ch-${n}" data-ch="${n}" onclick="event.preventDefault();document.getElementById('ch-${n}').scrollIntoView()">${String(n).padStart(2,'0')} ${CHAPTERS[n].t}</a>`).join('')}
+    </div>`).join('');
+  document.getElementById('notesBody').innerHTML=MODULES.map(m=>`
+    <div class="mod-divider">
+      <span class="tag" style="background:${m.color}">模块 · ${m.name}</span>
+      <h2>${m.desc}</h2>
+    </div>
+    ${m.pts.map(n=>{const c=CHAPTERS[n];return `
+    <div class="chapter" id="ch-${n}">
+      <div class="chapter-head">
+        <span class="num" style="color:${m.color}">${String(n).padStart(2,'0')}</span>
+        <h3 class="ch-title">${c.t}</h3>
+      </div>
+      ${c.sec.map(s=>`<div class="h4" style="border-color:${m.color}">${s.h}</div>${s.html}`).join('')}
+      <div class="takeaway"><b>一句话总结</b><span>${c.tk}</span></div>
+      <div class="chapter-foot">
+        <button class="btn" onclick="toggleRead(${n})">${store.read[n]?'标记为未读':'标记为已学'}</button>
+        <span class="read-state" style="display:${store.read[n]?'inline':'none'};color:${m.color}">已掌握 ✓</span>
+      </div>
+    </div>`}).join('')}`).join('');
+  const tocLinks=document.querySelectorAll('.toc a');
+  const obs=new IntersectionObserver(es=>{es.forEach(e=>{if(e.isIntersecting){tocLinks.forEach(a=>a.classList.toggle('active',a.dataset.ch===e.target.id.slice(3)))}})},{rootMargin:'-20% 0px -70% 0px'});
+  document.querySelectorAll('.chapter').forEach(c=>obs.observe(c));
+}
+function toggleRead(n){
+  store.read[n]=!store.read[n];save();renderNotes();updateProgress();
+  toast(store.read[n]?'已标记为掌握 ✓':'已取消标记');
+}
+
+/* ================= W1：事实/观点拖拽 ================= */
+const FV_ITEMS=[
+ {t:'这只苹果是红色的',f:1},{t:'我喜欢红色的苹果',f:0},{t:'人人都喜欢红色的苹果',f:1},
+ {t:'没有科学家有兴趣证明上帝是否存在',f:1},{t:'科学家应该努力去寻找上帝',f:0},
+ {t:'水在标准大气压下 100℃ 沸腾',f:1},{t:'白开水比可乐好喝',f:0},
+ {t:'每天喝 8 杯水更健康',f:1},{t:'我觉得喝热水很舒服',f:0},{t:'人类的平均体温约为 37℃',f:1}
+];
+let fvSelected=null;
+function renderFV(){
+  const pool=document.getElementById('fvPool');
+  pool.innerHTML=FV_ITEMS.filter(i=>!i.placed).map((i,idx)=>{
+    const ri=FV_ITEMS.indexOf(i);
+    return `<div class="drag-item" draggable="true" data-i="${ri}" onclick="fvPick(${ri})">${i.t}</div>`;
+  }).join('');
+  document.querySelectorAll('#fvPool .drag-item').forEach(el=>{
+    el.addEventListener('dragstart',e=>{e.dataTransfer.setData('i',el.dataset.i);el.classList.add('dragging')});
+    el.addEventListener('dragend',()=>el.classList.remove('dragging'));
+  });
+  ['fvFact','fvOpinion'].forEach(id=>{
+    const z=document.getElementById(id);
+    z.ondragover=e=>{e.preventDefault();z.classList.add('over')};
+    z.ondragleave=()=>z.classList.remove('over');
+    z.ondrop=e=>{e.preventDefault();z.classList.remove('over');fvPlace(+e.dataTransfer.getData('i'),id==='fvFact'?1:0)};
+    z.onclick=()=>{if(fvSelected!==null){fvPlace(fvSelected,id==='fvFact'?1:0);fvSelected=null}};
+  });
+}
+function fvPick(i){fvSelected=i;document.querySelectorAll('#fvPool .drag-item').forEach(el=>el.style.outline=el.dataset.i==i?'2px solid #1f2a37':'none')}
+function fvPlace(i,zone){
+  const item=FV_ITEMS[i];if(item.placed)return;
+  const ok=item.f===zone;item.placed=true;item.result=ok;
+  const z=document.getElementById(zone?'fvFact':'fvOpinion');
+  const el=document.createElement('div');el.className='drag-item '+(ok?'correct':'wrong');el.textContent=item.t+(ok?' ✓':' ✗');
+  z.appendChild(el);
+  document.getElementById('fvFb').textContent=ok?'正确：'+item.t+' 是'+(zone?'事实':'观点')+'陈述。':'判断错误：“'+item.t+'”实际是'+(item.f?'事实':'观点')+'陈述。';
+  document.getElementById('fvFb').style.color=ok?'var(--m2)':'#a33d24';
+  renderFV();
+  const done=FV_ITEMS.filter(x=>x.placed).length;
+  document.getElementById('fvProg').textContent=done+' / '+FV_ITEMS.length;
+  if(done===FV_ITEMS.length){const score=FV_ITEMS.filter(x=>x.result).length;document.getElementById('fvFb').textContent=`完成！答对 ${score}/${FV_ITEMS.length}。记住判据：能被客观证实或证伪的，就是事实陈述。`}
+}
+function resetFV(){FV_ITEMS.forEach(i=>{i.placed=false;i.result=false});document.getElementById('fvFact').innerHTML='<span class="dz-label">事实陈述（可证实 / 证伪）</span>';document.getElementById('fvOpinion').innerHTML='<span class="dz-label">观点陈述（态度 / 偏好）</span>';document.getElementById('fvFb').textContent='';document.getElementById('fvProg').textContent='';renderFV()}
+
+/* ================= W2：信源金字塔 ================= */
+const PY_DATA=[
+ {n:'一级 · 国际组织',v:10,d:'WHO（世界卫生组织）、IPCC（政府间气候变化专门委员会）、联合国下属机构发布的书面材料。'},
+ {n:'二级 · 顶级期刊',v:9,d:'Cell、Nature、Science（CNS）及约七八十本自然指数期刊，科学界公认的高质量期刊。'},
+ {n:'三级 · 国家级机构',v:8,d:'中科院、国家天文台、NASA、FDA 等国家级机构的书面材料，以及各类教科书。'},
+ {n:'四级 · SCI 期刊',v:7,d:'SCI 收录约 3500 种、SCIE 扩展收录约 8000 种期刊，常被称为核心期刊。'},
+ {n:'五级 · 垂直媒体',v:6,d:'具有良好口碑的专业机构垂直类媒体。'},
+ {n:'六级 · 综合大媒体',v:5,d:'综合性的大媒体（非平台性质）。'},
+ {n:'七级 · 个人著作',v:4,d:'某专家学者的个人著作、访谈等。等级再往下直到道听途说、“常言道”，可靠度最低。'}
+];
+function initPyramid(){
+  if(charts.py)return;
+  const c=echarts.init(document.getElementById('pyramidChart'));charts.py=c;
+  c.setOption({
+    tooltip:{show:false},
+    series:[{type:'funnel',sort:'descending',gap:2,minSize:'28%',
+      label:{position:'inside',formatter:'{b}',fontSize:12,color:'#fff',fontWeight:600},
+      itemStyle:{borderColor:'#fbf9f3',borderWidth:2},
+      color:['#24527f','#2f6498','#3d76ad','#5b8fbd','#7aa6cb','#9dbdd6','#c2d3e2'],
+      data:PY_DATA.map(d=>({name:d.n,value:d.v}))}],
+    graphic:{type:'text',left:'center',bottom:0,style:{text:'可靠度高 ↑ —— 低 ↓',fill:'#8a8f96',fontSize:11}}
+  });
+  c.on('click',p=>{const d=PY_DATA.find(x=>x.n===p.name);document.getElementById('pyramidDetail').innerHTML='<b>'+d.n+'</b>：'+d.d+'<br><span style="color:#a33d24;font-size:13px">注意：分级只是快速初判工具，最终仍需交叉比对、互相印证。</span>'});
+}
+
+/* ================= W3：选择性记忆模拟 ================= */
+let memData=[],memMode='all';
+function genMem(){
+  memData=[];
+  for(let i=0;i<120;i++){
+    const girl=Math.random()<0.5;
+    // 选择性记忆：生女孩的案例 85% 被“记住”，生男孩的只有 25%
+    const remembered=girl?Math.random()<0.85:Math.random()<0.25;
+    memData.push({girl,remembered});
+  }
+  drawMem();
+}
+function drawMem(){
+  const list=memMode==='all'?memData:memData.filter(d=>d.remembered);
+  const g=list.filter(d=>d.girl).length,b=list.length-g;
+  if(!charts.mem)charts.mem=echarts.init(document.getElementById('memChart'));
+  charts.mem.setOption({
+    title:{text:memMode==='all'?'全部 120 个家庭的真实统计':'只看“被记住”的案例（共 '+list.length+' 个）',left:'center',textStyle:{fontSize:14,fontWeight:500}},
+    grid:{left:60,right:30,top:56,bottom:40},
+    xAxis:{type:'category',data:['生男孩','生女孩'],axisLabel:{fontSize:14}},
+    yAxis:{type:'value',name:'家庭数'},
+    series:[{type:'bar',data:[
+      {value:b,itemStyle:{color:'#5b8fbd'}},
+      {value:g,itemStyle:{color:g>b?'#c0694f':'#2f7d52'}}],
+      barWidth:'42%',label:{show:true,position:'top',fontSize:15,fontWeight:700},
+      markLine:memMode==='all'?{silent:true,symbol:'none',data:[{yAxis:60,lineStyle:{type:'dashed',color:'#8a8f96'},label:{formatter:'期望值 60',fontSize:11}}]}:undefined}]
+  });
+  document.getElementById('memFb').textContent=memMode==='all'?'真实世界男女各约一半，这才是统计事实。':'看到了吗？被“记住”的案例里女孩明显偏多——“程序员生女孩”的错觉由此产生，反例全被选择性遗忘了。';
+  document.getElementById('memFb').style.color=memMode==='all'?'var(--m2)':'#a33d24';
+}
+document.getElementById('memSeg').addEventListener('click',e=>{if(e.target.dataset.m){memMode=e.target.dataset.m;document.querySelectorAll('#memSeg button').forEach(b=>b.classList.toggle('on',b===e.target));drawMem()}});
+
+/* ================= W4：相关性散点 ================= */
+const CORR={
+ icecream:{data:()=>{const p=[];for(let i=0;i<40;i++){const t=20+Math.random()*20;p.push([+(10+t*3+randN()*8).toFixed(1),+(2+t*1.2+randN()*4).toFixed(1),t.toFixed(0)]);}return p},
+  x:'雪糕销量（支/天）',y:'溺亡人数（人/月）',
+  detail:'两者只有<b style="color:#a33d24">相关性，没有因果性</b>。第三变量是<b>气温</b>：天热使雪糕销量与下水游泳人数同时升高。禁止雪糕并不能减少溺亡。'},
+ beer:{data:()=>{const p=[];for(let i=0;i<40;i++){const b=Math.random()*10;const snacks=b*0.9+randN()*1.5;p.push([+b.toFixed(1),+(70+snacks*6+randN()*4).toFixed(1)]);}return p},
+  x:'每周喝啤酒（升）',y:'腰围（cm）',
+  detail:'喝啤酒与肚子大只是<b style="color:#a33d24">相关</b>。啤酒总伴随夜宵烧烤、夜生活——真正的原因是<b>热量摄入高、运动少</b>。控制热量、多运动，喝啤酒也不会胖。'},
+ smoke:{data:()=>{const p=[];for(let i=0;i<40;i++){const s=Math.random()*40;p.push([+s.toFixed(1),+(5+s*2.2+randN()*10).toFixed(1)]);}return p},
+  x:'每日吸烟量（支）',y:'肺癌相对风险',
+  detail:'这一组经过严格的队列研究与剂量-反应分析，被公认为<b style="color:var(--m2)">因果关系</b>：吸烟量越大风险越高，戒烟则风险下降。认定因果靠的是证据链，而不是散点图本身。'}
+};
+function randN(){let u=0,v=0;while(!u)u=Math.random();while(!v)v=Math.random();return Math.sqrt(-2*Math.log(u))*Math.cos(2*Math.PI*v)}
+function drawCorr(key){
+  const cfg=CORR[key],d=cfg.data();
+  if(!charts.corr)charts.corr=echarts.init(document.getElementById('corrChart'));
+  const r=pearson(d);
+  charts.corr.setOption({
+    grid:{left:70,right:40,top:46,bottom:56},
+    title:{text:'相关系数 r = '+r,left:'center',top:6,textStyle:{fontSize:14,color:Math.abs(r)>0.7?'#c0694f':'#2f7d52'}},
+    xAxis:{type:'value',name:cfg.x,nameLocation:'middle',nameGap:32},
+    yAxis:{type:'value',name:cfg.y,nameLocation:'middle',nameGap:48},
+    series:[{type:'scatter',data:d,symbolSize:11,itemStyle:{color:key==='smoke'?'#2f7d52':'#bd622b',opacity:.75}}]
+  });
+  document.getElementById('corrDetail').innerHTML=cfg.detail;
+}
+function pearson(d){const n=d.length,sx=d.reduce((a,p)=>a+p[0],0),sy=d.reduce((a,p)=>a+p[1],0),mx=sx/n,my=sy/n;
+ let num=0,dx=0,dy=0;d.forEach(p=>{num+=(p[0]-mx)*(p[1]-my);dx+=(p[0]-mx)**2;dy+=(p[1]-my)**2});
+ return (num/Math.sqrt(dx*dy)).toFixed(2)}
+document.getElementById('corrSeg').addEventListener('click',e=>{if(e.target.dataset.c){document.querySelectorAll('#corrSeg button').forEach(b=>b.classList.toggle('on',b===e.target));drawCorr(e.target.dataset.c)}});
+
+/* ================= W5：谬误捕手测验 ================= */
+const FALLACY_Q=[
+ {q:'“如果全球变暖是人类活动造成的，那人类就不要活动了；所以全球变暖不是人类活动造成的。”',opts:['稻草人谬误','诉诸结果','循环论证'],a:1,why:'用观点成立后的结果好坏来证明观点是否成立，是诉诸结果。'},
+ {q:'“现代医学就是头疼医头、脚疼医脚。”',opts:['稻草人谬误','虚假两难','简单归纳'],a:0,why:'故意用错误、滑稽的方式概括现代医学再加以否定，是稻草人谬误。头疼可能查神经系统，脚疼（痛风）要调饮食。'},
+ {q:'“我每次鱼刺卡喉喝醋就好，所以醋能软化鱼刺。”',opts:['把偶然当必然','简单归纳','诉诸无关权威'],a:1,why:'个人小样本、不具代表性的经历不能推出普遍结论，是简单归纳。实际上喝醋是错误做法。'},
+ {q:'“你没法证明 UFO 不是外星人飞船，所以它就是。”',opts:['举证责任倒置','诉诸结果','对人不对事'],a:0,why:'让对方证明“不可能”，把证据缺失当成证据，是举证责任倒置。'},
+ {q:'“应该保护知识产权。”“你自己没用过盗版吗？有什么资格说。”',opts:['稻草人谬误','对人不对事','虚假两难'],a:1,why:'不回应观点本身，转而攻击说话者的人品，是对人不对事。'},
+ {q:'“你不转发这条内容，就不是中国人。”',opts:['虚假两难','循环论证','诉诸结果'],a:0,why:'人为制造非此即彼的二元选择，是虚假两难。'},
+ {q:'“你不信上火？看你昨天吃了瓜子，今天果然上火了吧！”',opts:['简单归纳','循环论证','稻草人谬误'],a:1,why:'先把所有症状都归因于“上火”，再用它证明“上火”，结论藏在前提里，是循环论证。'},
+ {q:'“某位诺贝尔化学奖得主说某保健品有效，所以一定有效。”',opts:['诉诸无关权威','举证责任倒置','把偶然当必然'],a:0,why:'科学家脱离本专业领域发言，可信度与常人无异，是诉诸无关权威。'}
+];
+let fIdx=0,fScore=0,fAnswered=false;
+function renderFallacy(){
+  const box=document.getElementById('fallacyBox');
+  if(fIdx>=FALLACY_Q.length){
+    box.innerHTML=`<div class="quiz-q">测验完成！得分 ${fScore} / ${FALLACY_Q.length}</div><button class="btn btn-primary" onclick="fIdx=0;fScore=0;renderFallacy()">再来一遍</button>`;return;
+  }
+  const q=FALLACY_Q[fIdx];fAnswered=false;
+  box.innerHTML=`<div class="quiz-q">${q.q}</div><div class="quz-opts">${q.opts.map((o,i)=>`<button class="quiz-opt" data-i="${i}">${o}</button>`).join('')}</div>
+    <div class="quiz-feedback" id="fFb"></div><div class="quiz-nav"><button class="btn" id="fNext" style="display:none">下一题</button><span class="quiz-progress">${fIdx+1} / ${FALLACY_Q.length}</span></div>`;
+  box.querySelectorAll('.quiz-opt').forEach(b=>b.onclick=()=>{
+    if(fAnswered)return;fAnswered=true;
+    const i=+b.dataset.i,ok=i===q.a;if(ok)fScore++;
+    box.querySelectorAll('.quiz-opt').forEach((x,j)=>{if(j===q.a)x.classList.add('right');if(j===i&&!ok)x.classList.add('bad')});
+    const fb=box.querySelector('#fFb');fb.textContent=(ok?'正确 ✓：':'错误：')+q.why;fb.style.color=ok?'var(--m2)':'#a33d24';
+    document.getElementById('fNext').style.display='inline-block';
+  });
+  document.getElementById('fNext').onclick=()=>{fIdx++;renderFallacy()};
+}
+
+/* ================= W6：双盲实验流程 ================= */
+const RCT_STEPS=[
+ {t:'大样本',d:'<b>大样本：</b>研究对象数量足够（通常 30–50 个起步，有些研究需数千）。样本太少，个体差异（有人好得快、有人慢）就会淹没真实效果。'},
+ {t:'随机分组',d:'<b>随机：</b>用抽签等方式把人随机分组，尽量覆盖各种年龄、体质。若青少年都进了吃药组、老人都进对照组，结果必然失真。'},
+ {t:'双盲',d:'<b>双盲：</b>被测者不知道自己吃的是真药还是淀粉胶囊（安慰剂），发药和评价的人也不知道。这样既排除安慰剂效应，也防止观察偏见与暗示。'},
+ {t:'对照',d:'<b>对照：</b>至少设实验组与对照组，比较“吃药”和“不吃药”的结果差异。感冒等自限性疾病会自愈，没有对照就分不清是药有效还是自己好的。'}
+];
+function renderRCT(){
+  document.getElementById('rctSteps').innerHTML=RCT_STEPS.map((s,i)=>`<div class="flow-step" data-i="${i}"><div class="fs-n">${i+1}</div><div class="fs-t">${s.t}</div></div>`).join('');
+  document.querySelectorAll('#rctSteps .flow-step').forEach(el=>el.onclick=()=>{
+    document.querySelectorAll('#rctSteps .flow-step').forEach(x=>x.classList.remove('active'));
+    el.classList.add('active');
+    document.getElementById('rctDetail').innerHTML=RCT_STEPS[+el.dataset.i].d;
+  });
+}
+
+/* ================= W7：可证伪性判官 ================= */
+const FALSIFY_Q=[
+ {q:'人是不会死的。',a:1,why:'可证伪：只要找到一个已经死去的人即被推翻（事实上已被大量反例证伪）。'},
+ {q:'鬼魂是存在的。',a:0,why:'不可证伪：无论多少次“没发现鬼魂”，都无法穷举证明鬼魂不存在。'},
+ {q:'在任何参考系中，光速不变。',a:1,why:'可证伪：原则上只要在某个参考系测出光速不同即可推翻；至今未找到反例。'},
+ {q:'现代人是从类人猿演化而来的。',a:1,why:'可证伪：发现与该命题矛盾的化石或证据即可将其推翻。'},
+ {q:'人类终有灭亡的那一天。',a:0,why:'不可证伪：人类存续再久也不能证明“永不灭亡”，无法在有限时间内穷举证伪。'},
+ {q:'人人都会死。',a:0,why:'不可证伪：要证明它错，需要找到一个永远不死的人，而“永远”无法在有限时间内验证。'},
+ {q:'日食时，星光会按计算值发生偏折。',a:1,why:'可证伪：去拍日食照片测量即可，结果可能直接判理论死刑——这就是判决实验。'}
+];
+let fsIdx=0,fsScore=0,fsAnswered=false;
+function renderFalsify(){
+  const box=document.getElementById('falsifyBox');
+  if(fsIdx>=FALSIFY_Q.length){box.innerHTML=`<div class="quiz-q">测验完成！得分 ${fsScore} / ${FALSIFY_Q.length}</div><button class="btn btn-primary" onclick="fsIdx=0;fsScore=0;renderFalsify()">再来一遍</button>`;return}
+  const q=FALSIFY_Q[fsIdx];fsAnswered=false;
+  box.innerHTML=`<div class="quiz-q">命题：“${q.q}”</div>
+    <div class="quz-opts" style="grid-template-columns:1fr 1fr">
+      <button class="quiz-opt" data-i="1">具备可证伪性（科学命题）</button>
+      <button class="quiz-opt" data-i="0">不可证伪（非科学命题）</button>
+    </div><div class="quiz-feedback" id="fsFb"></div>
+    <div class="quiz-nav"><button class="btn" id="fsNext" style="display:none">下一题</button><span class="quiz-progress">${fsIdx+1} / ${FALSIFY_Q.length}</span></div>`;
+  box.querySelectorAll('.quiz-opt').forEach(b=>b.onclick=()=>{
+    if(fsAnswered)return;fsAnswered=true;
+    const i=+b.dataset.i,ok=i===q.a;if(ok)fsScore++;
+    box.querySelectorAll('.quiz-opt').forEach(x=>{if(+x.dataset.i===q.a)x.classList.add('right');if(x===b&&!ok)x.classList.add('bad')});
+    const fb=box.querySelector('#fsFb');fb.textContent=(ok?'正确 ✓：':'错误：')+q.why;fb.style.color=ok?'var(--m2)':'#a33d24';
+    document.getElementById('fsNext').style.display='inline-block';
+  });
+  document.getElementById('fsNext').onclick=()=>{fsIdx++;renderFalsify()};
+}
+
+/* ================= 实验室初始化 ================= */
+let labInited=false;
+function initLabCharts(){
+  if(!labInited){
+    resetFV();initPyramid();genMem();drawCorr('icecream');
+    renderFallacy();renderRCT();renderFalsify();labInited=true;
+  }
+  setTimeout(()=>{Object.values(charts).forEach(c=>c.resize())},80);
+}
+
+/* ================= Anki 复习逻辑 ================= */
+let deckFilter='all',curCard=-1;
+function modOf(ch){return MODULES.find(m=>m.pts.includes(ch))}
+function initReview(){
+  document.getElementById('totalCards').textContent=DECKS.length;
+  const seg=document.getElementById('deckSeg');
+  seg.innerHTML='<button class="on" data-d="all">全部</button>'+MODULES.map(m=>`<button data-d="${m.id}">${m.name}</button>`).join('');
+  seg.querySelectorAll('button').forEach(b=>b.onclick=()=>{seg.querySelectorAll('button').forEach(x=>x.classList.remove('on'));b.classList.add('on');deckFilter=b.dataset.d;drawCard()});
+  updateReviewStats();drawCard();
+}
+function filteredDeck(){
+  return DECKS.map((c,i)=>({c,i})).filter(o=>deckFilter==='all'||modOf(o.c.ch).id===deckFilter);
+}
+function drawCard(onlyWrong){
+  let pool=filteredDeck();
+  if(onlyWrong==='wrong')pool=pool.filter(o=>(store.cards[o.i]??1)<2);
+  if(!pool.length){toast('这个范围已全部掌握');return}
+  // 加权抽样：不会的权重最高
+  const weights=pool.map(o=>{const s=store.cards[o.i];return s===2?.3:s===1?2:s===0?5:3});
+  let total=weights.reduce((a,b)=>a+b,0),r=Math.random()*total;
+  let chosen=pool[0];
+  for(let k=0;k<pool.length;k++){r-=weights[k];if(r<=0){chosen=pool[k];break}}
+  curCard=chosen.i;
+  const c=chosen.c,m=modOf(c.ch);
+  document.getElementById('flashcard').classList.remove('flipped');
+  document.getElementById('cardTag').textContent=m.name;
+  document.getElementById('cardTag2').textContent=m.name;
+  document.getElementById('cardTag').style.background=m.color;
+  document.getElementById('cardTag2').style.background=m.color;
+  document.getElementById('cardQ').textContent=c.q;
+  document.getElementById('cardA').innerHTML=c.a;
+  document.getElementById('cardRate').style.visibility='visible';
+}
+function flipCard(){document.getElementById('flashcard').classList.toggle('flipped')}
+function rateCard(s){
+  if(curCard<0)return;
+  store.cards[curCard]=s;save();updateReviewStats();drawCard();
+  toast(['已记录：不会，会多考考你','已记录：模糊','已记录：掌握 ✓'][s]);
+}
+function updateReviewStats(){
+  const vals=Object.values(store.cards);
+  document.getElementById('stGood').textContent=vals.filter(v=>v===2).length;
+  document.getElementById('stHard').textContent=vals.filter(v=>v===1).length;
+  document.getElementById('stAgain').textContent=vals.filter(v=>v===0).length;
+  // 各模块掌握度
+  const data=MODULES.map(m=>{
+    const idxs=DECKS.map((c,i)=>({c,i})).filter(o=>modOf(o.c.ch).id===m.id).map(o=>o.i);
+    const mastered=idxs.filter(i=>store.cards[i]===2).length;
+    return {name:m.name.replace('力',''),value:Math.round(mastered/idxs.length*100)};
+  });
+  if(!charts.mastery)charts.mastery=echarts.init(document.getElementById('masteryChart'));
+  charts.mastery.setOption({
+    title:{text:'各模块掌握度（%）',left:'center',textStyle:{fontSize:14,fontWeight:500}},
+    radar:{indicator:data.map(d=>({name:d.name,max:100})),radius:'62%',center:['50%','58%']},
+    series:[{type:'radar',data:[{value:data.map(d=>d.value),areaStyle:{color:'rgba(106,72,153,.25)'},lineStyle:{color:'#6a4899'},itemStyle:{color:'#6a4899'}}]}]
+  });
+}
+function resetReview(){store.cards={};save();updateReviewStats();drawCard();toast('复习进度已重置')}
+document.addEventListener('keydown',e=>{
+  if(!document.getElementById('view-review').classList.contains('active'))return;
+  if(e.code==='Space'){e.preventDefault();flipCard()}
+  else if(e.code==='ArrowRight')drawCard();
+});
+
+/* ================= 启动 ================= */
+renderHome();
+if(location.hash.slice(1)==='notes'){renderNotes();route('notes')}
+else if(location.hash.slice(1)==='lab'){route('lab')}
+else if(location.hash.slice(1)==='review'){route('review')}
+window.addEventListener('resize',()=>Object.values(charts).forEach(c=>c&&c.resize()));
+
+
+</script>
+</body>
+</html>
