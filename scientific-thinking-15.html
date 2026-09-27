@@ -653,14 +653,14 @@ function drawMem(){
   if(!charts.mem)charts.mem=echarts.init(document.getElementById('memChart'));
   charts.mem.setOption({
     title:{text:memMode==='all'?'全部 120 个家庭的真实统计':'只看“被记住”的案例（共 '+list.length+' 个）',left:'center',textStyle:{fontSize:14,fontWeight:500}},
-    grid:{left:60,right:30,top:56,bottom:40},
+    grid:{left:60,right:56,top:56,bottom:40},
     xAxis:{type:'category',data:['生男孩','生女孩'],axisLabel:{fontSize:14}},
     yAxis:{type:'value',name:'家庭数'},
     series:[{type:'bar',data:[
       {value:b,itemStyle:{color:'#5b8fbd'}},
       {value:g,itemStyle:{color:g>b?'#c0694f':'#2f7d52'}}],
       barWidth:'42%',label:{show:true,position:'top',fontSize:15,fontWeight:700},
-      markLine:memMode==='all'?{silent:true,symbol:'none',data:[{yAxis:60,lineStyle:{type:'dashed',color:'#8a8f96'},label:{formatter:'期望值 60',fontSize:11}}]}:undefined}]
+      markLine:memMode==='all'?{silent:true,symbol:'none',data:[{yAxis:60,lineStyle:{type:'dashed',color:'#8a8f96'},label:{formatter:'期望值 60',fontSize:11,position:'insideEndTop'}}]}:undefined}]
   });
   document.getElementById('memFb').textContent=memMode==='all'?'真实世界男女各约一半，这才是统计事实。':'看到了吗？被“记住”的案例里女孩明显偏多——“程序员生女孩”的错觉由此产生，反例全被选择性遗忘了。';
   document.getElementById('memFb').style.color=memMode==='all'?'var(--m2)':'#a33d24';
